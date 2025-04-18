@@ -47,14 +47,14 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 }
 
 func handleGet(res http.ResponseWriter, req *http.Request) {
-	shortUrl := req.RequestURI[1:]
+	shortURL := req.RequestURI[1:]
 
-	if strings.Contains(shortUrl, "/") {
+	if strings.Contains(shortURL, "/") {
 		res.WriteHeader(http.StatusBadRequest)
 		return;
 	}
 
-	url, ok := store[shortUrl]
+	url, ok := store[shortURL]
 	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
 		return;
