@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var store map[string]string = make(map[string]string)
+var store = make(map[string]string)
 
 func MainHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost && req.RequestURI == `/` {
