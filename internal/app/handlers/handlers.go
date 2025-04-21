@@ -1,29 +1,40 @@
-package app
+package handlers
 
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/eduardtungatarov/shortener/internal/app/storage"
 	"io"
 	"net/http"
 	"strings"
 )
 
-var store = make(map[string]string)
+type handler struct {
+	storage storage.Storage
+	host string
+}
 
-func MainHandler(res http.ResponseWriter, req *http.Request) {
+func MakeHandler(storage storage.Storage, host string) *handler {
+	return &handler{
+		storage: storage,
+		host: host,
+	}
+}
+
+func (h *handler) MainHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodPost && req.RequestURI == `/` {
-		handlePost(res, req)
+		h.handlePost(res, req)
 		return;
 	}
 
 	if req.Method == http.MethodGet && len(req.RequestURI) > 1 {
-		handleGet(res, req)
+		h.handleGet(res, req)
 		return;
 	}
 	res.WriteHeader(http.StatusBadRequest)
 }
 
-func handlePost(res http.ResponseWriter, req *http.Request) {
+func (h *handler) handlePost(res http.ResponseWriter, req *http.Request) {
 	if !strings.Contains(req.Header.Get(`Content-Type`), `text/plain`) {
 		res.WriteHeader(http.StatusBadRequest)
 		return;
@@ -40,13 +51,13 @@ func handlePost(res http.ResponseWriter, req *http.Request) {
 	hash := md5.Sum(body)
 	hashStr := fmt.Sprintf("%x", hash)
 	key := hashStr[:7]
-	store[key] = string(body)
+	h.storage.Set(key, string(body))
 
 	res.WriteHeader(http.StatusCreated)
-	_, _ = res.Write([]byte(`http://localhost:8080/`+key))
+	_, _ = res.Write([]byte("http://"+h.host+"/"+key))
 }
 
-func handleGet(res http.ResponseWriter, req *http.Request) {
+func (h *handler) handleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := req.RequestURI[1:]
 
 	if strings.Contains(shortURL, "/") {
@@ -54,7 +65,7 @@ func handleGet(res http.ResponseWriter, req *http.Request) {
 		return;
 	}
 
-	url, ok := store[shortURL]
+	url, ok := h.storage.Get(shortURL)
 	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
 		return;
