@@ -1,8 +1,12 @@
-package handlers
+package server
 
 import (
+	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -27,7 +31,7 @@ func (s *mockStorage) Get(key string) (value string, ok bool) {
 	return v, ok
 }
 
-func TestMainHandler(t *testing.T) {
+func TestServer(t *testing.T) {
 	type input struct {
 		preloadedStorage storage.Storage
 		httpMethod string
@@ -134,7 +138,7 @@ func TestMainHandler(t *testing.T) {
 				body: "https://practicum.yandex.ru/",
 			},
 			output: output{
-				statusCode: 400,
+				statusCode: 405,
 				locationHeaderValue: "",
 				response: "",
 			},
@@ -153,7 +157,7 @@ func TestMainHandler(t *testing.T) {
 				body: "",
 			},
 			output: output{
-				statusCode: 400,
+				statusCode: 405,
 				locationHeaderValue: "",
 				response: "",
 			},
@@ -191,29 +195,47 @@ func TestMainHandler(t *testing.T) {
 				body: "",
 			},
 			output: output{
-				statusCode: 400,
+				statusCode: 405,
 				locationHeaderValue: "",
 				response: "",
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(tt.input.httpMethod, tt.input.requestURI, strings.NewReader(tt.input.body))
+
+			// заводим сервер
+			h := handlers.MakeHandler(
+				tt.input.preloadedStorage,
+				host,
+			)
+			r := getRouter(h)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+
+			// подгатавливаем реквест
+			req, err := http.NewRequest(tt.input.httpMethod, ts.URL+tt.input.requestURI, strings.NewReader(tt.input.body))
+			require.NoError(t, err)
 			req.Header.Set("Content-Type", tt.input.contentType)
 
-			w := httptest.NewRecorder()
-			h := &handler{
-				storage: tt.input.preloadedStorage,
-				host: "localhost:8080",
+			//шлем запрос на сервер
+			client := ts.Client()
+			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
 			}
-			h.MainHandler(w, req)
+			resp, err := ts.Client().Do(req)
+			require.NoError(t, err)
+			defer resp.Body.Close()
 
-			assert.Equal(t, tt.output.statusCode, w.Code)
-			assert.Equal(t, tt.output.locationHeaderValue, w.Header().Get("Location"))
+			// обрабатываем ответ
+			respBody, err := io.ReadAll(resp.Body)
+			require.NoError(t, err)
 
-			body := w.Body.String()
-			assert.Contains(t, body, tt.output.response)
+			assert.Equal(t, tt.output.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.output.locationHeaderValue, resp.Header.Get("Location"))
+
+			assert.Contains(t, string(respBody), tt.output.response)
 		})
 	}
 }

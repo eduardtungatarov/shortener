@@ -3,19 +3,26 @@ package server
 import (
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
 const host = `localhost:8080`
 
 func Run() error {
-	handler := handlers.MakeHandler(
+	h := handlers.MakeHandler(
 		storage.MakeStorage(),
 		host,
 	)
+	r := getRouter(h)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc(`/`, handler.MainHandler)
+	return http.ListenAndServe(host, r)
+}
 
-	return http.ListenAndServe(host, mux)
+func getRouter(h *handlers.Handler) chi.Router {
+	r := chi.NewRouter()
+	r.Post("/", h.HandlePost)
+	r.Get("/{shortUrl}", h.HandleGet)
+
+	return r
 }

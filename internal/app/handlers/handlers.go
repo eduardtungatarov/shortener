@@ -4,37 +4,25 @@ import (
 	"crypto/md5"
 	"fmt"
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
+	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
 	"strings"
 )
 
-type handler struct {
+type Handler struct {
 	storage storage.Storage
 	host string
 }
 
-func MakeHandler(storage storage.Storage, host string) *handler {
-	return &handler{
+func MakeHandler(storage storage.Storage, host string) *Handler {
+	return &Handler{
 		storage: storage,
 		host: host,
 	}
 }
 
-func (h *handler) MainHandler(res http.ResponseWriter, req *http.Request) {
-	if req.Method == http.MethodPost && req.RequestURI == `/` {
-		h.handlePost(res, req)
-		return;
-	}
-
-	if req.Method == http.MethodGet && len(req.RequestURI) > 1 {
-		h.handleGet(res, req)
-		return;
-	}
-	res.WriteHeader(http.StatusBadRequest)
-}
-
-func (h *handler) handlePost(res http.ResponseWriter, req *http.Request) {
+func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 	if !strings.Contains(req.Header.Get(`Content-Type`), `text/plain`) {
 		res.WriteHeader(http.StatusBadRequest)
 		return;
@@ -57,13 +45,8 @@ func (h *handler) handlePost(res http.ResponseWriter, req *http.Request) {
 	_, _ = res.Write([]byte("http://"+h.host+"/"+key))
 }
 
-func (h *handler) handleGet(res http.ResponseWriter, req *http.Request) {
-	shortURL := req.RequestURI[1:]
-
-	if strings.Contains(shortURL, "/") {
-		res.WriteHeader(http.StatusBadRequest)
-		return;
-	}
+func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
+	shortURL := chi.URLParam(req, "shortUrl")
 
 	url, ok := h.storage.Get(shortURL)
 	if !ok {
