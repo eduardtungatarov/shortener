@@ -12,13 +12,13 @@ import (
 
 type Handler struct {
 	storage storage.Storage
-	baseUrl string
+	baseURL string
 }
 
-func MakeHandler(storage storage.Storage, baseUrl string) *Handler {
+func MakeHandler(storage storage.Storage, baseURL string) *Handler {
 	return &Handler{
 		storage: storage,
-		baseUrl: baseUrl,
+		baseURL: baseURL,
 	}
 }
 
@@ -42,7 +42,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 	h.storage.Set(key, string(body))
 
 	res.WriteHeader(http.StatusCreated)
-	_, _ = res.Write([]byte(h.baseUrl+"/"+key))
+	_, _ = res.Write([]byte(h.baseURL+"/"+key))
 }
 
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {

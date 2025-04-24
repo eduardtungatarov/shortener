@@ -4,7 +4,7 @@ import "flag"
 
 type Config struct {
 	ServerHostPort string
-	BaseUrl string
+	BaseURL string
 }
 
 func LoadFromFlag() Config  {
@@ -14,6 +14,6 @@ func LoadFromFlag() Config  {
 
 	return Config{
 		ServerHostPort: *a,
-		BaseUrl: *b,
+		BaseURL: *b,
 	}
 }

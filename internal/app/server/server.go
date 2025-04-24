@@ -11,7 +11,7 @@ import (
 func Run(cfg config.Config) error {
 	h := handlers.MakeHandler(
 		storage.MakeStorage(),
-		cfg.BaseUrl,
+		cfg.BaseURL,
 	)
 	r := getRouter(h)
 
