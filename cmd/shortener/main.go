@@ -1,11 +1,13 @@
 package main
 
 import (
+	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/server"
 )
 
 func main() {
-	err := server.Run()
+	cfg := config.LoadFromFlag()
+	err := server.Run(cfg)
 	if err != nil {
 		panic(err)
 	}

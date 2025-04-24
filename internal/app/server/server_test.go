@@ -208,7 +208,7 @@ func TestServer(t *testing.T) {
 			// заводим сервер
 			h := handlers.MakeHandler(
 				tt.input.preloadedStorage,
-				host,
+				"http://localhost:8080",
 			)
 			r := getRouter(h)
 			ts := httptest.NewServer(r)
