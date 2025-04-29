@@ -50,7 +50,7 @@ func TestServer(t *testing.T) {
 		output output
 	}{
 		{
-			name: "success post",
+			name: "success_post",
 			input: input{
 				preloadedStorage: makeMockStorage(),
 				httpMethod: "POST",
@@ -65,7 +65,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "success get",
+			name: "success_get",
 			input: input{
 				preloadedStorage: func() storage.Storage {
 					s := makeMockStorage()
@@ -84,7 +84,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "post with empty contentType",
+			name: "post_with_empty_contentType",
 			input: input{
 				preloadedStorage: makeMockStorage(),
 				httpMethod: "POST",
@@ -99,7 +99,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "post with incorrect contentType",
+			name: "post_with_incorrect_contentType",
 			input: input{
 				preloadedStorage: makeMockStorage(),
 				httpMethod: "POST",
@@ -114,7 +114,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "post with empty body",
+			name: "post_with_empty_body",
 			input: input{
 				preloadedStorage: makeMockStorage(),
 				httpMethod: "POST",
@@ -129,7 +129,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "post with incorrect path",
+			name: "post_with_incorrect_path",
 			input: input{
 				preloadedStorage: makeMockStorage(),
 				httpMethod: "POST",
@@ -144,7 +144,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "get with empty shortUrl",
+			name: "get_with_empty_shortUrl",
 			input: input{
 				preloadedStorage: func() storage.Storage {
 					s := makeMockStorage()
@@ -163,7 +163,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "get unexists shortUrl",
+			name: "get_unexists_shortUrl",
 			input: input{
 				preloadedStorage: func() storage.Storage {
 					s := makeMockStorage()
@@ -182,7 +182,7 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "incorrect method",
+			name: "incorrect_method",
 			input: input{
 				preloadedStorage: func() storage.Storage {
 					s := makeMockStorage()
