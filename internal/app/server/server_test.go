@@ -2,7 +2,6 @@ package server
 
 import (
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
-	"github.com/eduardtungatarov/shortener/internal/app/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -16,7 +15,7 @@ type mockStorage struct {
 	m map[string]string
 }
 
-func makeMockStorage() storage.Storage {
+func makeMockStorage() *mockStorage{
 	return &mockStorage{
 		m: make(map[string]string),
 	}
@@ -33,7 +32,7 @@ func (s *mockStorage) Get(key string) (value string, ok bool) {
 
 func TestServer(t *testing.T) {
 	type input struct {
-		preloadedStorage storage.Storage
+		preloadedStorage handlers.Storage
 		httpMethod string
 		requestURI string
 		contentType string
@@ -67,7 +66,7 @@ func TestServer(t *testing.T) {
 		{
 			name: "success_get",
 			input: input{
-				preloadedStorage: func() storage.Storage {
+				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
 					s.Set("0dd1981", "https://practicum.yandex.ru/")
 					return s
@@ -146,7 +145,7 @@ func TestServer(t *testing.T) {
 		{
 			name: "get_with_empty_shortUrl",
 			input: input{
-				preloadedStorage: func() storage.Storage {
+				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
 					s.Set("0dd1981", "https://practicum.yandex.ru/")
 					return s
@@ -165,7 +164,7 @@ func TestServer(t *testing.T) {
 		{
 			name: "get_unexists_shortUrl",
 			input: input{
-				preloadedStorage: func() storage.Storage {
+				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
 					s.Set("0dd1981", "https://practicum.yandex.ru/")
 					return s
@@ -184,7 +183,7 @@ func TestServer(t *testing.T) {
 		{
 			name: "incorrect_method",
 			input: input{
-				preloadedStorage: func() storage.Storage {
+				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
 					s.Set("0dd1981", "https://practicum.yandex.ru/")
 					return s
@@ -232,10 +231,10 @@ func TestServer(t *testing.T) {
 			respBody, err := io.ReadAll(resp.Body)
 			require.NoError(t, err)
 
-			assert.Equal(t, tt.output.statusCode, resp.StatusCode)
-			assert.Equal(t, tt.output.locationHeaderValue, resp.Header.Get("Location"))
+			assert.Equal(t, tt.output.statusCode, resp.StatusCode, "Ожидался http статус ответа %v, а не %v", tt.output.statusCode, resp.StatusCode)
+			assert.Equal(t, tt.output.locationHeaderValue, resp.Header.Get("Location"), "Ожидался редирект на url: %v, по факту редирект на: %v", tt.output.locationHeaderValue, resp.Header.Get("Location"))
 
-			assert.Contains(t, string(respBody), tt.output.response)
+			assert.Contains(t, string(respBody), tt.output.response, "Ссылка в ответе должна начинаться с %v, получено = %v", tt.output.response, string(respBody))
 		})
 	}
 }

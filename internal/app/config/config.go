@@ -10,23 +10,35 @@ type Config struct {
 	BaseURL string
 }
 
+var flagServer *string
+var flagBaseURL *string
+
+func init() {
+	flagServer = flag.String("a", "", "отвечает за адрес запуска HTTP-сервера")
+	flagBaseURL = flag.String("b", "", "отвечает за базовый адрес результирующего сокращённого URL")
+}
+
+func setDefaultValuesToFlags() {
+	*flagServer = "localhost:8080"
+	*flagBaseURL = "http://localhost:8080"
+}
+
 func LoadFromFlag() Config  {
-	a := flag.String("a", "localhost:8080", "отвечает за адрес запуска HTTP-сервера")
-	b := flag.String("b", "http://localhost:8080", "отвечает за базовый адрес результирующего сокращённого URL")
+	setDefaultValuesToFlags()
 	flag.Parse()
 
 	aEnv, ok := os.LookupEnv("SERVER_ADDRESS")
 	if ok {
-		*a = aEnv
+		*flagServer = aEnv
 	}
 
 	bEnv, ok := os.LookupEnv("BASE_URL")
 	if ok {
-		*b = bEnv
+		*flagBaseURL = bEnv
 	}
 
 	return Config{
-		ServerHostPort: *a,
-		BaseURL: *b,
+		ServerHostPort: *flagServer,
+		BaseURL: *flagBaseURL,
 	}
 }

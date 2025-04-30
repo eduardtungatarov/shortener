@@ -3,19 +3,24 @@ package handlers
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/eduardtungatarov/shortener/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 )
 
+type Storage interface {
+	Set(key, value string)
+	Get(key string) (value string, ok bool)
+}
+
 type Handler struct {
-	storage storage.Storage
+	storage Storage
 	baseURL string
 }
 
-func MakeHandler(storage storage.Storage, baseURL string) *Handler {
+func MakeHandler(storage Storage, baseURL string) *Handler {
 	return &Handler{
 		storage: storage,
 		baseURL: baseURL,
@@ -28,8 +33,12 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 		return;
 	}
 
-	body, _ := io.ReadAll(req.Body)
-	_ = req.Body.Close()
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Printf("Не удалось прочитать тело запроса: %v", err)
+		return;
+	}
+	defer req.Body.Close()
 
 	if len(body) == 0 {
 		res.WriteHeader(http.StatusBadRequest)
@@ -42,7 +51,11 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 	h.storage.Set(key, string(body))
 
 	res.WriteHeader(http.StatusCreated)
-	_, _ = res.Write([]byte(h.baseURL+"/"+key))
+	_, err = res.Write([]byte(h.baseURL+"/"+key))
+	if err != nil {
+		log.Printf("Ошибка при записи ответа: %v", err)
+		return;
+	}
 }
 
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
