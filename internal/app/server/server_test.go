@@ -207,7 +207,7 @@ func TestServer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			// заводим сервер
-			log, err := logger.MakeLogger()
+			log, err := logger.MakeNop()
 			if err != nil {
 				panic(err)
 			}
