@@ -23,7 +23,16 @@ func (m *Middleware) WithLog(handler http.HandlerFunc) http.HandlerFunc {
 		uri := req.RequestURI
 		method := req.Method
 
-		handler.ServeHTTP(res, req)
+		responseData := &responseData {
+			status: 0,
+			size: 0,
+		}
+		lres := &logResponseWriter{
+			ResponseWriter: res,
+			responseData: responseData,
+		}
+
+		handler.ServeHTTP(lres, req)
 
 		duration := time.Since(start)
 
@@ -31,6 +40,8 @@ func (m *Middleware) WithLog(handler http.HandlerFunc) http.HandlerFunc {
 			"uri", uri,
 			"method", method,
 			"duration", duration,
+			"status", responseData.status,
+			"size", responseData.size,
 		)
 	}
 }
