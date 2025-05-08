@@ -2,13 +2,25 @@ package main
 
 import (
 	"github.com/eduardtungatarov/shortener/internal/app/config"
+	"github.com/eduardtungatarov/shortener/internal/app/handlers"
+	"github.com/eduardtungatarov/shortener/internal/app/logger"
+	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 	"github.com/eduardtungatarov/shortener/internal/app/server"
-	"log"
+	"github.com/eduardtungatarov/shortener/internal/app/storage"
 )
 
 func main() {
+	log, err := logger.MakeLogger()
+	if err != nil {
+		panic(err)
+	}
+
 	cfg := config.LoadFromFlag()
-	err := server.Run(cfg)
+	s := storage.MakeStorage()
+	m := middleware.MakeMiddleware(log)
+	h := handlers.MakeHandler(s, cfg.BaseURL)
+
+	err = server.Run(cfg, h, m)
 	if err != nil {
 		log.Fatal(err)
 	}
