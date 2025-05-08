@@ -2,6 +2,8 @@ package server
 
 import (
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
+	"github.com/eduardtungatarov/shortener/internal/app/logger"
+	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -205,11 +207,18 @@ func TestServer(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			// заводим сервер
+			log, err := logger.MakeLogger()
+			if err != nil {
+				panic(err)
+			}
+
+			m := middleware.MakeMiddleware(log)
 			h := handlers.MakeHandler(
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
 			)
-			r := getRouter(h)
+
+			r := getRouter(h, m)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
