@@ -43,6 +43,7 @@ func TestServer(t *testing.T) {
 	type output struct {
 		statusCode int
 		locationHeaderValue string
+		contentTypeHeaderValue string
 		response string
 	}
 	tests := []struct {
@@ -212,7 +213,7 @@ func TestServer(t *testing.T) {
 			},
 			output: output{
 				statusCode: 201,
-				locationHeaderValue: "",
+				contentTypeHeaderValue: "application/json",
 				response: `{"result":"http://localhost:8080/`,
 			},
 		},
@@ -227,7 +228,7 @@ func TestServer(t *testing.T) {
 			},
 			output: output{
 				statusCode: 400,
-				locationHeaderValue: "",
+				contentTypeHeaderValue: "",
 				response: ``,
 			},
 		},
@@ -242,7 +243,7 @@ func TestServer(t *testing.T) {
 			},
 			output: output{
 				statusCode: 405,
-				locationHeaderValue: "",
+				contentTypeHeaderValue: "",
 				response: ``,
 			},
 		},
@@ -257,7 +258,7 @@ func TestServer(t *testing.T) {
 			},
 			output: output{
 				statusCode: 500,
-				locationHeaderValue: "",
+				contentTypeHeaderValue: "",
 				response: ``,
 			},
 		},
@@ -272,7 +273,7 @@ func TestServer(t *testing.T) {
 			},
 			output: output{
 				statusCode: 400,
-				locationHeaderValue: "",
+				contentTypeHeaderValue: "",
 				response: ``,
 			},
 		},
@@ -317,6 +318,9 @@ func TestServer(t *testing.T) {
 
 			assert.Equal(t, tt.output.statusCode, resp.StatusCode, "Ожидался http статус ответа %v, а не %v", tt.output.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.output.locationHeaderValue, resp.Header.Get("Location"), "Ожидался редирект на url: %v, по факту редирект на: %v", tt.output.locationHeaderValue, resp.Header.Get("Location"))
+			if tt.output.contentTypeHeaderValue != "" {
+				assert.Equal(t, tt.output.contentTypeHeaderValue, resp.Header.Get("Content-Type"), "Ожидался Content-Type в ответе: %v, по факту: %v", tt.output.contentTypeHeaderValue, resp.Header.Get("Content-Type"))
+			}
 
 			assert.Contains(t, string(respBody), tt.output.response, "Ссылка в ответе должна начинаться с %v, получено = %v", tt.output.response, string(respBody))
 		})

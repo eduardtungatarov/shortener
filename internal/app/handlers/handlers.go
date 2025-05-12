@@ -108,8 +108,8 @@ func (h *Handler) HandleShorten() http.HandlerFunc {
 		}{}
 		respStr.Result = h.baseURL+"/"+key
 
-		res.WriteHeader(http.StatusCreated)
 		res.Header().Set("Content-Type", "application/json")
+		res.WriteHeader(http.StatusCreated)
 		enc := json.NewEncoder(res)
 		if err := enc.Encode(respStr); err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
