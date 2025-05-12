@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"io"
@@ -46,9 +47,7 @@ func (h *Handler) HandlePost() http.HandlerFunc {
 			return;
 		}
 
-		hash := md5.Sum(body)
-		hashStr := fmt.Sprintf("%x", hash)
-		key := hashStr[:7]
+		key := h.getKey(body)
 		h.storage.Set(key, string(body))
 
 		res.WriteHeader(http.StatusCreated)
@@ -73,4 +72,54 @@ func (h *Handler) HandleGet() http.HandlerFunc {
 		res.Header().Add(`Location`, url)
 		res.WriteHeader(http.StatusTemporaryRedirect)
 	}
+}
+
+func (h *Handler) HandleShorten() http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		// Обрабатываем запрос.
+		if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
+			res.WriteHeader(http.StatusBadRequest)
+			return;
+		}
+
+		reqStr := struct {
+			Url string `json:"url"`
+		}{}
+
+		defer req.Body.Close()
+		dec := json.NewDecoder(req.Body)
+		if err := dec.Decode(&reqStr); err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			return;
+		}
+
+		if reqStr.Url == "" {
+			res.WriteHeader(http.StatusBadRequest)
+			return;
+		}
+
+		// Сохраняем url.
+		key := h.getKey([]byte(reqStr.Url))
+		h.storage.Set(key, reqStr.Url)
+
+		// Формируем ответ.
+		respStr := struct {
+			Result string `json:"result"`
+		}{}
+		respStr.Result = h.baseURL+"/"+key
+
+		res.Header().Set("Content-Type", "application/json")
+		enc := json.NewEncoder(res)
+		if err := enc.Encode(respStr); err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			return;
+		}
+	}
+}
+
+func (h *Handler) getKey(url []byte) string {
+	hash := md5.Sum(url)
+	hashStr := fmt.Sprintf("%x", hash)
+	key := hashStr[:7]
+	return key
 }
