@@ -83,7 +83,7 @@ func (h *Handler) HandleShorten() http.HandlerFunc {
 		}
 
 		reqStr := struct {
-			Url string `json:"url"`
+			URL string `json:"url"`
 		}{}
 
 		defer req.Body.Close()
@@ -93,14 +93,14 @@ func (h *Handler) HandleShorten() http.HandlerFunc {
 			return;
 		}
 
-		if reqStr.Url == "" {
+		if reqStr.URL == "" {
 			res.WriteHeader(http.StatusBadRequest)
 			return;
 		}
 
 		// Сохраняем url.
-		key := h.getKey([]byte(reqStr.Url))
-		h.storage.Set(key, reqStr.Url)
+		key := h.getKey([]byte(reqStr.URL))
+		h.storage.Set(key, reqStr.URL)
 
 		// Формируем ответ.
 		respStr := struct {
