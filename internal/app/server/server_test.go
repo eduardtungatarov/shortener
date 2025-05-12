@@ -201,6 +201,81 @@ func TestServer(t *testing.T) {
 				response: "",
 			},
 		},
+		{
+			name: "success_post_api_shorten",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 201,
+				locationHeaderValue: "",
+				response: `{"result":"http://localhost:8080/`,
+			},
+		},
+		{
+			name: "post_api_shorten_without_application_json_header",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 400,
+				locationHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_another_method",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "GET",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 405,
+				locationHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_not_json_body",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: ``,
+			},
+			output: output{
+				statusCode: 500,
+				locationHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_body_without_json_url",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"test": "bla"}`,
+			},
+			output: output{
+				statusCode: 400,
+				locationHeaderValue: "",
+				response: ``,
+			},
+		},
 	}
 
 	for _, tt := range tests {
