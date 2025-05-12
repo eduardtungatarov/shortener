@@ -5,26 +5,19 @@ import (
 	"os"
 )
 
+const (
+	DefaultServerHostPort = "localhost:8080"
+	DefaultBaseURL        = "http://localhost:8080"
+)
+
 type Config struct {
 	ServerHostPort string
 	BaseURL string
 }
 
-var flagServer *string
-var flagBaseURL *string
-
-func init() {
-	flagServer = flag.String("a", "", "отвечает за адрес запуска HTTP-сервера")
-	flagBaseURL = flag.String("b", "", "отвечает за базовый адрес результирующего сокращённого URL")
-}
-
-func setDefaultValuesToFlags() {
-	*flagServer = "localhost:8080"
-	*flagBaseURL = "http://localhost:8080"
-}
-
 func LoadFromFlag() Config  {
-	setDefaultValuesToFlags()
+	flagServer := flag.String("a", DefaultServerHostPort, "отвечает за адрес запуска HTTP-сервера")
+	flagBaseURL := flag.String("b", DefaultBaseURL, "отвечает за базовый адрес результирующего сокращённого URL")
 	flag.Parse()
 
 	aEnv, ok := os.LookupEnv("SERVER_ADDRESS")

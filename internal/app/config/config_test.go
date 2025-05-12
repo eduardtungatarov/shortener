@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -130,6 +131,7 @@ func TestLoadFromFlag(t *testing.T) {
 			}
 
 			// проверяем
+			resetCommandLineFlagSet()
 			config := LoadFromFlag()
 			assert.Equal(t, tt.output.serverHostPort, config.ServerHostPort, "Ожидается что хост и порт сервера = %v, по факту = %v", tt.output.serverHostPort, config.ServerHostPort)
 			assert.Equal(t, tt.output.baseURL, config.BaseURL, "Ожидается что base URL = %v, по факту = %v", tt.output.baseURL, config.BaseURL)
@@ -138,4 +140,8 @@ func TestLoadFromFlag(t *testing.T) {
 			os.Args = oldOsArgs
 		})
 	}
+}
+
+func resetCommandLineFlagSet() {
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }

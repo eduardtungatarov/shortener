@@ -2,6 +2,8 @@ package server
 
 import (
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
+	"github.com/eduardtungatarov/shortener/internal/app/logger"
+	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -41,6 +43,7 @@ func TestServer(t *testing.T) {
 	type output struct {
 		statusCode int
 		locationHeaderValue string
+		contentTypeHeaderValue string
 		response string
 	}
 	tests := []struct {
@@ -199,17 +202,99 @@ func TestServer(t *testing.T) {
 				response: "",
 			},
 		},
+		{
+			name: "success_post_api_shorten",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 201,
+				contentTypeHeaderValue: "application/json",
+				response: `{"result":"http://localhost:8080/`,
+			},
+		},
+		{
+			name: "post_api_shorten_without_application_json_header",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 400,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_another_method",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "GET",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 405,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_not_json_body",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: ``,
+			},
+			output: output{
+				statusCode: 500,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_body_without_json_url",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"test": "bla"}`,
+			},
+			output: output{
+				statusCode: 400,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			// заводим сервер
+			log, err := logger.MakeNop()
+			if err != nil {
+				panic(err)
+			}
+
+			m := middleware.MakeMiddleware(log)
 			h := handlers.MakeHandler(
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
 			)
-			r := getRouter(h)
+
+			r := getRouter(h, m)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
@@ -233,6 +318,9 @@ func TestServer(t *testing.T) {
 
 			assert.Equal(t, tt.output.statusCode, resp.StatusCode, "Ожидался http статус ответа %v, а не %v", tt.output.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.output.locationHeaderValue, resp.Header.Get("Location"), "Ожидался редирект на url: %v, по факту редирект на: %v", tt.output.locationHeaderValue, resp.Header.Get("Location"))
+			if tt.output.contentTypeHeaderValue != "" {
+				assert.Equal(t, tt.output.contentTypeHeaderValue, resp.Header.Get("Content-Type"), "Ожидался Content-Type в ответе: %v, по факту: %v", tt.output.contentTypeHeaderValue, resp.Header.Get("Content-Type"))
+			}
 
 			assert.Contains(t, string(respBody), tt.output.response, "Ссылка в ответе должна начинаться с %v, получено = %v", tt.output.response, string(respBody))
 		})
