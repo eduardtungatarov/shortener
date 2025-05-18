@@ -106,36 +106,6 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
-			name: "post_with_empty_contentType",
-			input: input{
-				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/",
-				contentType: "",
-				body: "https://practicum.yandex.ru/",
-			},
-			output: output{
-				statusCode: 400,
-				locationHeaderValue: "",
-				response: "",
-			},
-		},
-		{
-			name: "post_with_incorrect_contentType",
-			input: input{
-				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/",
-				contentType: "application/json",
-				body: "https://practicum.yandex.ru/",
-			},
-			output: output{
-				statusCode: 400,
-				locationHeaderValue: "",
-				response: "",
-			},
-		},
-		{
 			name: "post_with_empty_body",
 			input: input{
 				preloadedStorage: makeMockStorage(),

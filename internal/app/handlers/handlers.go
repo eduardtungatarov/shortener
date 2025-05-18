@@ -30,12 +30,6 @@ func MakeHandler(storage Storage, baseURL string) *Handler {
 
 func (h *Handler) HandlePost() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
-		if !strings.Contains(req.Header.Get(`Content-Type`), `text/plain`) && !strings.Contains(req.Header.Get(`Content-Type`), `application/x-gzip`) {
-			fmt.Println(req.Header.Get(`Content-Type`))
-			res.WriteHeader(http.StatusBadRequest)
-			return;
-		}
-
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
 			log.Printf("Не удалось прочитать тело запроса: %v", err)
