@@ -71,6 +71,22 @@ func TestServer(t *testing.T) {
 			},
 		},
 		{
+			name: "success_post_with_gzip",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/",
+				contentType: "text/plain",
+				contentEncoding: "gzip",
+				body: "https://practicum.yandex.ru/",
+			},
+			output: output{
+				statusCode: 201,
+				locationHeaderValue: "",
+				response: "http://localhost:8080/",
+			},
+		},
+		{
 			name: "success_get",
 			input: input{
 				preloadedStorage: func() handlers.Storage {

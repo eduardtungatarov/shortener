@@ -17,7 +17,7 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	r := chi.NewRouter()
 	r.Post(
 		"/",
-		m.WithLog(h.HandlePost()),
+		m.WithGzipReq(m.WithLog(h.HandlePost())),
 	)
 	r.Get(
 		"/{shortUrl}",
@@ -25,7 +25,7 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	)
 	r.Post(
 		"/api/shorten",
-		m.WithCompress(m.WithLog(h.HandleShorten())),
+		m.WithGzipReq(m.WithGzipResp(m.WithLog(h.HandleShorten()))),
 	)
 	return r
 }
