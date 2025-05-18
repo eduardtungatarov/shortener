@@ -54,6 +54,7 @@ func (m *Middleware) WithCompress(handler http.HandlerFunc) http.HandlerFunc {
 		if strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
 			gRes := NewGzipResponseWriter(oRes)
 			defer gRes.Close()
+			oRes.Header().Set("Content-Encoding", "gzip")
 
 			oRes = gRes
 		}
