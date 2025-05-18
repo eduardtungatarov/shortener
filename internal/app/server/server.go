@@ -25,7 +25,7 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	)
 	r.Post(
 		"/api/shorten",
-		m.WithLog(h.HandleShorten()),
+		m.WithCompress(m.WithLog(h.HandleShorten())),
 	)
 	return r
 }

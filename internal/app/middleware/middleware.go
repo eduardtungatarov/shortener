@@ -3,6 +3,7 @@ package middleware
 import (
 	"go.uber.org/zap"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -45,3 +46,30 @@ func (m *Middleware) WithLog(handler http.HandlerFunc) http.HandlerFunc {
 		)
 	}
 }
+
+func (m *Middleware) WithCompress(handler http.HandlerFunc) http.HandlerFunc {
+	return func(res http.ResponseWriter, req *http.Request) {
+		oRes := res
+
+		if strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
+			gRes := NewGzipResponseWriter(oRes)
+			defer gRes.Close()
+
+			oRes = gRes
+		}
+
+		if strings.Contains(req.Header.Get("Content-Encoding"), "gzip") {
+			gzipR, err := NewGzipReader(req.Body)
+			if err != nil {
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			defer gzipR.Close()
+
+			req.Body = gzipR
+		}
+
+		handler.ServeHTTP(oRes, req)
+	}
+}
+
