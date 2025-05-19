@@ -16,7 +16,12 @@ func main() {
 	}
 
 	cfg := config.LoadFromFlag()
-	s := storage.MakeStorage()
+
+	s, err := storage.MakeStorage(cfg.FileStoragePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	m := middleware.MakeMiddleware(log)
 	h := handlers.MakeHandler(s, cfg.BaseURL)
 

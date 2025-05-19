@@ -25,8 +25,9 @@ func makeMockStorage() *mockStorage{
 	}
 }
 
-func (s *mockStorage) Set(key, value string) {
+func (s *mockStorage) Set(key, value string) error {
 	s.m[key] = value
+	return nil
 }
 
 func (s *mockStorage) Get(key string) (value string, ok bool) {

@@ -11,12 +11,15 @@ func TestLoadFromFlag(t *testing.T) {
 	type input struct {
 		settedServerHostPortFlag string
 		settedBaseURLFlag string
+		settedFileStoragePathFlag string
 		settedServerHostPortEnv string
 		settedBaseURLEnv string
+		settedFileStoragePathEnv string
 	}
 	type output struct {
 		serverHostPort string
 		baseURL string
+		fileStoragePath string
 	}
 
 	tests := []struct {
@@ -100,6 +103,44 @@ func TestLoadFromFlag(t *testing.T) {
 			output: output{
 				serverHostPort: "test:8080",
 				baseURL: "http://blabla:80",
+			},
+		},
+		{
+			name: "setted_filestoragepathflag",
+			input: input{
+				settedFileStoragePathFlag: "/path/flag",
+			},
+			output: output{
+				fileStoragePath: "/path/flag",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
+		{
+			name: "setted_filestoragepathflag_and_env",
+			input: input{
+				settedFileStoragePathFlag: "/path/flag",
+				settedFileStoragePathEnv: "/path/env",
+			},
+			output: output{
+				fileStoragePath: "path/env",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
+		{
+			name: "not_setted_filestoragepathflag_and_env",
+			input: input{
+				settedFileStoragePathFlag: "",
+				settedFileStoragePathEnv: "",
+			},
+			output: output{
+				fileStoragePath: "./",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
 			},
 		},
 	}

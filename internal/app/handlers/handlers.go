@@ -12,7 +12,7 @@ import (
 )
 
 type Storage interface {
-	Set(key, value string)
+	Set(key, value string) error
 	Get(key string) (value string, ok bool)
 }
 
@@ -32,6 +32,7 @@ func (h *Handler) HandlePost() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		body, err := io.ReadAll(req.Body)
 		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
 			log.Printf("Не удалось прочитать тело запроса: %v", err)
 			return;
 		}
@@ -43,11 +44,17 @@ func (h *Handler) HandlePost() http.HandlerFunc {
 		}
 
 		key := h.getKey(body)
-		h.storage.Set(key, string(body))
+		err = h.storage.Set(key, string(body))
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			log.Printf("Не удалось сохранить url: %v", err)
+			return;
+		}
 
 		res.WriteHeader(http.StatusCreated)
 		_, err = res.Write([]byte(h.baseURL+"/"+key))
 		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
 			log.Printf("Ошибка при записи ответа: %v", err)
 			return;
 		}
@@ -95,7 +102,11 @@ func (h *Handler) HandleShorten() http.HandlerFunc {
 
 		// Сохраняем url.
 		key := h.getKey([]byte(reqStr.URL))
-		h.storage.Set(key, reqStr.URL)
+		err := h.storage.Set(key, reqStr.URL)
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			return;
+		}
 
 		// Формируем ответ.
 		respStr := struct {
