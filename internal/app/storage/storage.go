@@ -16,10 +16,11 @@ type storage struct {
 	m map[string]string
 	file *os.File
 	encoder *json.Encoder
+	decoder *json.Decoder
 }
 
 func MakeStorage(filename string) (*storage, error) {
-	file, err := os.OpenFile(filename, os.O_CREATE | os.O_WRONLY |os.O_APPEND, 0666)
+	file, err := os.OpenFile(filename, os.O_CREATE | os.O_RDWR |os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +29,26 @@ func MakeStorage(filename string) (*storage, error) {
 		m: make(map[string]string),
 		file: file,
 		encoder: json.NewEncoder(file),
+		decoder: json.NewDecoder(file),
 	}, nil
+}
+
+func (s *storage) Load() error {
+	v := storageString{}
+
+	for  {
+		err := s.decoder.Decode(&v)
+		if err != nil {
+			if err.Error() == "EOF" {
+				break
+			}
+			return err
+		}
+
+		s.m[v.ShortUrl] = v.OriginalUrl
+	}
+
+	return nil
 }
 
 func (s *storage) Set(key, value string) error {

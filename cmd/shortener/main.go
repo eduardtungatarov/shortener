@@ -21,6 +21,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	err = s.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	m := middleware.MakeMiddleware(log)
 	h := handlers.MakeHandler(s, cfg.BaseURL)

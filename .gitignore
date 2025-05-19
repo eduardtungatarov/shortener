@@ -22,4 +22,3 @@ vendor/
 .idea
 .vscode
 Makefile
-storage.file
