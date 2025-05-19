@@ -8,8 +8,8 @@ import (
 
 type storageString struct {
 	UUID string `json:"uuid"`
-	ShortUrl string `json:"short_url"`
-	OriginalUrl string `json:"original_url"`
+	ShortURL string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 type storage struct {
@@ -45,7 +45,7 @@ func (s *storage) Load() error {
 			return err
 		}
 
-		s.m[v.ShortUrl] = v.OriginalUrl
+		s.m[v.ShortURL] = v.OriginalURL
 	}
 
 	return nil
@@ -54,8 +54,8 @@ func (s *storage) Load() error {
 func (s *storage) Set(key, value string) error {
 	v := storageString{
 		UUID: uuid.New().String(),
-		ShortUrl: key,
-		OriginalUrl: value,
+		ShortURL: key,
+		OriginalURL: value,
 	}
 	err := s.encoder.Encode(v)
 	if err != nil {
