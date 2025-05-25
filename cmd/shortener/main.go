@@ -19,11 +19,11 @@ func main() {
 
 	s, err := storage.MakeStorage(cfg.FileStoragePath)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to make storage: %v", err)
 	}
 	err = s.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to load storage: %v", err)
 	}
 
 	m := middleware.MakeMiddleware(log)
@@ -31,6 +31,6 @@ func main() {
 
 	err = server.Run(cfg, h, m)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to run server: %v", err)
 	}
 }
