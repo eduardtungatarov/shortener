@@ -1,6 +1,7 @@
 package config
 
 import (
+	"flag"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
@@ -10,12 +11,15 @@ func TestLoadFromFlag(t *testing.T) {
 	type input struct {
 		settedServerHostPortFlag string
 		settedBaseURLFlag string
+		settedFileStoragePathFlag string
 		settedServerHostPortEnv string
 		settedBaseURLEnv string
+		settedFileStoragePathEnv string
 	}
 	type output struct {
 		serverHostPort string
 		baseURL string
+		fileStoragePath string
 	}
 
 	tests := []struct {
@@ -101,6 +105,44 @@ func TestLoadFromFlag(t *testing.T) {
 				baseURL: "http://blabla:80",
 			},
 		},
+		{
+			name: "setted_filestoragepathflag",
+			input: input{
+				settedFileStoragePathFlag: "/path/flag",
+			},
+			output: output{
+				fileStoragePath: "/path/flag",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
+		{
+			name: "setted_filestoragepathflag_and_env",
+			input: input{
+				settedFileStoragePathFlag: "/path/flag",
+				settedFileStoragePathEnv: "/path/env",
+			},
+			output: output{
+				fileStoragePath: "path/env",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
+		{
+			name: "not_setted_filestoragepathflag_and_env",
+			input: input{
+				settedFileStoragePathFlag: "",
+				settedFileStoragePathEnv: "",
+			},
+			output: output{
+				fileStoragePath: "./",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -130,6 +172,7 @@ func TestLoadFromFlag(t *testing.T) {
 			}
 
 			// проверяем
+			resetCommandLineFlagSet()
 			config := LoadFromFlag()
 			assert.Equal(t, tt.output.serverHostPort, config.ServerHostPort, "Ожидается что хост и порт сервера = %v, по факту = %v", tt.output.serverHostPort, config.ServerHostPort)
 			assert.Equal(t, tt.output.baseURL, config.BaseURL, "Ожидается что base URL = %v, по факту = %v", tt.output.baseURL, config.BaseURL)
@@ -138,4 +181,8 @@ func TestLoadFromFlag(t *testing.T) {
 			os.Args = oldOsArgs
 		})
 	}
+}
+
+func resetCommandLineFlagSet() {
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 }

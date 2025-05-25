@@ -1,7 +1,11 @@
 package server
 
 import (
+	"bytes"
+	"compress/gzip"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
+	"github.com/eduardtungatarov/shortener/internal/app/logger"
+	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -21,8 +25,9 @@ func makeMockStorage() *mockStorage{
 	}
 }
 
-func (s *mockStorage) Set(key, value string) {
+func (s *mockStorage) Set(key, value string) error {
 	s.m[key] = value
+	return nil
 }
 
 func (s *mockStorage) Get(key string) (value string, ok bool) {
@@ -36,11 +41,14 @@ func TestServer(t *testing.T) {
 		httpMethod string
 		requestURI string
 		contentType string
+		acceptEncoding string
+		contentEncoding string
 		body string
 	}
 	type output struct {
 		statusCode int
 		locationHeaderValue string
+		contentTypeHeaderValue string
 		response string
 	}
 	tests := []struct {
@@ -55,6 +63,22 @@ func TestServer(t *testing.T) {
 				httpMethod: "POST",
 				requestURI: "/",
 				contentType: "text/plain",
+				body: "https://practicum.yandex.ru/",
+			},
+			output: output{
+				statusCode: 201,
+				locationHeaderValue: "",
+				response: "http://localhost:8080/",
+			},
+		},
+		{
+			name: "success_post_with_gzip",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/",
+				contentType: "text/plain",
+				contentEncoding: "gzip",
 				body: "https://practicum.yandex.ru/",
 			},
 			output: output{
@@ -79,36 +103,6 @@ func TestServer(t *testing.T) {
 			output: output{
 				statusCode: 307,
 				locationHeaderValue: "https://practicum.yandex.ru/",
-				response: "",
-			},
-		},
-		{
-			name: "post_with_empty_contentType",
-			input: input{
-				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/",
-				contentType: "",
-				body: "https://practicum.yandex.ru/",
-			},
-			output: output{
-				statusCode: 400,
-				locationHeaderValue: "",
-				response: "",
-			},
-		},
-		{
-			name: "post_with_incorrect_contentType",
-			input: input{
-				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/",
-				contentType: "application/json",
-				body: "https://practicum.yandex.ru/",
-			},
-			output: output{
-				statusCode: 400,
-				locationHeaderValue: "",
 				response: "",
 			},
 		},
@@ -199,24 +193,153 @@ func TestServer(t *testing.T) {
 				response: "",
 			},
 		},
+		{
+			name: "success_post_api_shorten",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 201,
+				contentTypeHeaderValue: "application/json",
+				response: `{"result":"http://localhost:8080/`,
+			},
+		},
+		{
+			name: "success_post_api_shorten_with_accept_encoding",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				acceptEncoding: "gzip",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 201,
+				contentTypeHeaderValue: "application/json",
+				response: `{"result":"http://localhost:8080/`,
+			},
+		},
+		{
+			name: "success_post_api_shorten_with_content_encoding",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				contentEncoding: "gzip",
+				acceptEncoding: "gzip",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 201,
+				contentTypeHeaderValue: "application/json",
+				response: `{"result":"http://localhost:8080/`,
+			},
+		},
+		{
+			name: "post_api_shorten_without_application_json_header",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 400,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_another_method",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "GET",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"url":"https://practicum.yandex.ru"}`,
+			},
+			output: output{
+				statusCode: 405,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_not_json_body",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: ``,
+			},
+			output: output{
+				statusCode: 500,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "post_api_shorten_body_without_json_url",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten",
+				contentType: "application/json",
+				body: `{"test": "bla"}`,
+			},
+			output: output{
+				statusCode: 400,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			// заводим сервер
+			log, err := logger.MakeNop()
+			if err != nil {
+				panic(err)
+			}
+
+			m := middleware.MakeMiddleware(log)
 			h := handlers.MakeHandler(
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
 			)
-			r := getRouter(h)
+
+			r := getRouter(h, m)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 
 			// подгатавливаем реквест
-			req, err := http.NewRequest(tt.input.httpMethod, ts.URL+tt.input.requestURI, strings.NewReader(tt.input.body))
+			var reqReader io.Reader
+			reqReader = strings.NewReader(tt.input.body)
+			if tt.input.contentEncoding == "gzip" {
+				var b bytes.Buffer
+				w := gzip.NewWriter(&b)
+				_, err := w.Write([]byte(tt.input.body))
+				require.NoError(t, err)
+				err = w.Close()
+				require.NoError(t, err)
+				reqReader = bytes.NewReader(b.Bytes())
+			}
+
+			req, err := http.NewRequest(tt.input.httpMethod, ts.URL+tt.input.requestURI, reqReader)
 			require.NoError(t, err)
 			req.Header.Set("Content-Type", tt.input.contentType)
+			req.Header.Set("Accept-Encoding", tt.input.acceptEncoding)
+			req.Header.Set("Content-Encoding", tt.input.contentEncoding)
 
 			//шлем запрос на сервер
 			client := ts.Client()
@@ -227,14 +350,27 @@ func TestServer(t *testing.T) {
 			require.NoError(t, err)
 			defer resp.Body.Close()
 
-			// обрабатываем ответ
-			respBody, err := io.ReadAll(resp.Body)
-			require.NoError(t, err)
-
 			assert.Equal(t, tt.output.statusCode, resp.StatusCode, "Ожидался http статус ответа %v, а не %v", tt.output.statusCode, resp.StatusCode)
 			assert.Equal(t, tt.output.locationHeaderValue, resp.Header.Get("Location"), "Ожидался редирект на url: %v, по факту редирект на: %v", tt.output.locationHeaderValue, resp.Header.Get("Location"))
+			if tt.output.contentTypeHeaderValue != "" {
+				assert.Equal(t, tt.output.contentTypeHeaderValue, resp.Header.Get("Content-Type"), "Ожидался Content-Type в ответе: %v, по факту: %v", tt.output.contentTypeHeaderValue, resp.Header.Get("Content-Type"))
+			}
 
-			assert.Contains(t, string(respBody), tt.output.response, "Ссылка в ответе должна начинаться с %v, получено = %v", tt.output.response, string(respBody))
+			if resp.StatusCode == http.StatusCreated {
+				body := resp.Body
+				if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
+					gzipR, err := gzip.NewReader(body)
+					require.NoError(t, err)
+					defer gzipR.Close()
+					body = gzipR
+				}
+
+				// обрабатываем ответ
+				respBody, err := io.ReadAll(body)
+				require.NoError(t, err)
+
+				assert.Contains(t, string(respBody), tt.output.response, "Ссылка в ответе должна начинаться с %v, получено = %v", tt.output.response, string(respBody))
+			}
 		})
 	}
 }
