@@ -80,3 +80,15 @@ func (m *Middleware) WithGzipReq(next http.Handler) http.Handler {
 	})
 }
 
+
+func (m *Middleware) WithJsonReqCheck(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
+			res.WriteHeader(http.StatusBadRequest)
+			return;
+		}
+
+		next.ServeHTTP(res, req)
+	})
+}
+

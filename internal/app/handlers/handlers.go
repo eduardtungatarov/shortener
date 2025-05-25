@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 )
 
 type Storage interface {
@@ -28,99 +27,87 @@ func MakeHandler(storage Storage, baseURL string) *Handler {
 	}
 }
 
-func (h *Handler) HandlePost() http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		body, err := io.ReadAll(req.Body)
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			log.Printf("Не удалось прочитать тело запроса: %v", err)
-			return;
-		}
-		defer req.Body.Close()
+func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
+	body, err := io.ReadAll(req.Body)
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Не удалось прочитать тело запроса: %v", err)
+		return;
+	}
+	defer req.Body.Close()
 
-		if len(body) == 0 {
-			res.WriteHeader(http.StatusBadRequest)
-			return;
-		}
+	if len(body) == 0 {
+		res.WriteHeader(http.StatusBadRequest)
+		return;
+	}
 
-		key := h.getKey(body)
-		err = h.storage.Set(key, string(body))
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			log.Printf("Не удалось сохранить url: %v", err)
-			return;
-		}
+	key := h.getKey(body)
+	err = h.storage.Set(key, string(body))
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Не удалось сохранить url: %v", err)
+		return;
+	}
 
-		res.WriteHeader(http.StatusCreated)
-		_, err = res.Write([]byte(h.baseURL+"/"+key))
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			log.Printf("Ошибка при записи ответа: %v", err)
-			return;
-		}
+	res.WriteHeader(http.StatusCreated)
+	_, err = res.Write([]byte(h.baseURL+"/"+key))
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Ошибка при записи ответа: %v", err)
+		return;
 	}
 }
 
-func (h *Handler) HandleGet() http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		shortURL := chi.URLParam(req, "shortUrl")
+func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
+	shortURL := chi.URLParam(req, "shortUrl")
 
-		url, ok := h.storage.Get(shortURL)
-		if !ok {
-			res.WriteHeader(http.StatusBadRequest)
-			return;
-		}
-
-		res.Header().Add(`Location`, url)
-		res.WriteHeader(http.StatusTemporaryRedirect)
+	url, ok := h.storage.Get(shortURL)
+	if !ok {
+		res.WriteHeader(http.StatusBadRequest)
+		return;
 	}
+
+	res.Header().Add(`Location`, url)
+	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func (h *Handler) HandleShorten() http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
-		// Обрабатываем запрос.
-		if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
-			res.WriteHeader(http.StatusBadRequest)
-			return;
-		}
+func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
+	reqStr := struct {
+		URL string `json:"url"`
+	}{}
 
-		reqStr := struct {
-			URL string `json:"url"`
-		}{}
+	defer req.Body.Close()
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&reqStr); err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
+	}
 
-		defer req.Body.Close()
-		dec := json.NewDecoder(req.Body)
-		if err := dec.Decode(&reqStr); err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			return;
-		}
+	if reqStr.URL == "" {
+		res.WriteHeader(http.StatusBadRequest)
+		return;
+	}
 
-		if reqStr.URL == "" {
-			res.WriteHeader(http.StatusBadRequest)
-			return;
-		}
+	// Сохраняем url.
+	key := h.getKey([]byte(reqStr.URL))
+	err := h.storage.Set(key, reqStr.URL)
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
+	}
 
-		// Сохраняем url.
-		key := h.getKey([]byte(reqStr.URL))
-		err := h.storage.Set(key, reqStr.URL)
-		if err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			return;
-		}
+	// Формируем ответ.
+	respStr := struct {
+		Result string `json:"result"`
+	}{}
+	respStr.Result = h.baseURL+"/"+key
 
-		// Формируем ответ.
-		respStr := struct {
-			Result string `json:"result"`
-		}{}
-		respStr.Result = h.baseURL+"/"+key
-
-		res.Header().Set("Content-Type", "application/json")
-		res.WriteHeader(http.StatusCreated)
-		enc := json.NewEncoder(res)
-		if err := enc.Encode(respStr); err != nil {
-			res.WriteHeader(http.StatusInternalServerError)
-			return;
-		}
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusCreated)
+	enc := json.NewEncoder(res)
+	if err := enc.Encode(respStr); err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
 	}
 }
 
