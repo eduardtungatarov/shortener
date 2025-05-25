@@ -15,11 +15,14 @@ func TestLoadFromFlag(t *testing.T) {
 		settedServerHostPortEnv string
 		settedBaseURLEnv string
 		settedFileStoragePathEnv string
+		settedDatabaseDSNFlag string
+		settedDatabaseDSNEnv string
 	}
 	type output struct {
 		serverHostPort string
 		baseURL string
 		fileStoragePath string
+		databaseDSN string
 	}
 
 	tests := []struct {
@@ -138,6 +141,44 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 			output: output{
 				fileStoragePath: "./",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
+		{
+			name: "setted_databasedsnflag",
+			input: input{
+				settedDatabaseDSNFlag: "host=flag port=port user=myuser password=xxxx dbname=mydb",
+			},
+			output: output{
+				databaseDSN: "host=flag port=port user=myuser password=xxxx dbname=mydb",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
+		{
+			name: "setted_databasedsnflag_and_env",
+			input: input{
+				settedDatabaseDSNFlag: "host=flag port=port user=myuser password=xxxx dbname=mydb",
+				settedDatabaseDSNEnv: "host=env port=port user=myuser password=xxxx dbname=mydb",
+			},
+			output: output{
+				databaseDSN: "host=env port=port user=myuser password=xxxx dbname=mydb",
+				//
+				baseURL: "http://localhost:8080",
+				serverHostPort: "localhost:8080",
+			},
+		},
+		{
+			name: "not_setted_databasedsnflag_and_env",
+			input: input{
+				settedDatabaseDSNFlag: "",
+				settedDatabaseDSNEnv: "",
+			},
+			output: output{
+				databaseDSN: "",
 				//
 				baseURL: "http://localhost:8080",
 				serverHostPort: "localhost:8080",
