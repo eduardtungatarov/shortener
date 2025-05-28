@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
@@ -15,15 +16,23 @@ type Storage interface {
 	Get(key string) (value string, ok bool)
 }
 
-type Handler struct {
-	storage Storage
-	baseURL string
+type Pinger interface {
+	Ping(ctx context.Context) error
 }
 
-func MakeHandler(storage Storage, baseURL string) *Handler {
+type Handler struct {
+	ctx context.Context
+	storage Storage
+	baseURL string
+	pinger Pinger
+}
+
+func MakeHandler(ctx context.Context, storage Storage, baseURL string, pinger Pinger) *Handler {
 	return &Handler{
+		ctx: ctx,
 		storage: storage,
 		baseURL: baseURL,
+		pinger: pinger,
 	}
 }
 
@@ -112,8 +121,12 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
+	err := h.pinger.Ping(h.ctx)
+	if err != nil {
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
-	//res.WriteHeader(http.StatusInternalServerError)
 	res.WriteHeader(http.StatusOK)
 }
 

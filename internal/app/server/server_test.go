@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/logger"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
@@ -314,8 +315,10 @@ func TestServer(t *testing.T) {
 
 			m := middleware.MakeMiddleware(log)
 			h := handlers.MakeHandler(
+				context.Background(),
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
+				nil,
 			)
 
 			r := getRouter(h, m)

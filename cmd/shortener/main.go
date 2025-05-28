@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/logger"
@@ -10,6 +12,8 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
+
 	log, err := logger.MakeLogger()
 	if err != nil {
 		panic(err)
@@ -26,10 +30,14 @@ func main() {
 		log.Fatalf("failed to load storage: %v", err)
 	}
 
-
+	db, err := storage.MakeDB(cfg.Database)
+	if err != nil {
+		log.Fatalf("failed to make database: %v", err)
+	}
+	defer db.SqlDB.Close()
 
 	m := middleware.MakeMiddleware(log)
-	h := handlers.MakeHandler(s, cfg.BaseURL)
+	h := handlers.MakeHandler(ctx, s, cfg.BaseURL, db)
 
 	err = server.Run(cfg, h, m)
 	if err != nil {
