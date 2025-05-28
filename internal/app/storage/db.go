@@ -8,18 +8,18 @@ import (
 )
 
 type DB struct {
-	SqlDB *sql.DB
+	SQLDB *sql.DB
 	Timeout time.Duration
 }
 
 func MakeDB(cfg config.Database) (*DB, error)  {
-	sqlDB, err := sql.Open("pgx", cfg.DSN)
+	SQLDB, err := sql.Open("pgx", cfg.DSN)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DB{
-		SqlDB: sqlDB,
+		SQLDB: SQLDB,
 		Timeout: cfg.Timeout,
 	}, nil
 }
@@ -27,7 +27,7 @@ func MakeDB(cfg config.Database) (*DB, error)  {
 func (db *DB) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, db.Timeout)
 	defer cancel()
-	if err := db.SqlDB.PingContext(ctx); err != nil {
+	if err := db.SQLDB.PingContext(ctx); err != nil {
 		return err
 	}
 	return nil

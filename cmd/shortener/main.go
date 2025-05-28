@@ -34,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to make database: %v", err)
 	}
-	defer db.SqlDB.Close()
+	defer db.SQLDB.Close()
 
 	m := middleware.MakeMiddleware(log)
 	h := handlers.MakeHandler(ctx, s, cfg.BaseURL, db)
