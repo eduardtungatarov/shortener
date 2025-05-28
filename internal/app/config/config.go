@@ -3,6 +3,7 @@ package config
 import (
 	"flag"
 	"os"
+	"time"
 )
 
 const (
@@ -16,7 +17,12 @@ type Config struct {
 	ServerHostPort string
 	BaseURL string
 	FileStoragePath string
-	DatabaseDSN string
+	Database
+}
+
+type Database struct {
+	DSN string
+	Timeout time.Duration
 }
 
 func LoadFromFlag() Config  {
@@ -50,6 +56,9 @@ func LoadFromFlag() Config  {
 		ServerHostPort: *flagServer,
 		BaseURL: *flagBaseURL,
 		FileStoragePath: *flagFileStoragePath,
-		DatabaseDSN: *databaseDSN,
+		Database: Database{
+			DSN: *databaseDSN,
+			Timeout: time.Second * 1,
+		},
 	}
 }

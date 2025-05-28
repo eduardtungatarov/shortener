@@ -35,12 +35,16 @@ func TestLoadFromFlag(t *testing.T) {
 			input: input{
 				settedServerHostPortFlag: "",
 				settedBaseURLFlag: "",
+				settedFileStoragePathFlag: "",
+				settedDatabaseDSNFlag: "",
 				settedServerHostPortEnv: "",
 				settedBaseURLEnv: "",
 			},
 			output: output{
 				serverHostPort: "localhost:8080",
 				baseURL: "http://localhost:8080",
+				fileStoragePath: "/tmp/short-url-db.json",
+				databaseDSN: "",
 			},
 		},
 		{
@@ -48,12 +52,16 @@ func TestLoadFromFlag(t *testing.T) {
 			input: input{
 				settedServerHostPortFlag: "blabla:80",
 				settedBaseURLFlag: "http://blabla:80",
+				settedFileStoragePathFlag: "/flag/path",
+				settedDatabaseDSNFlag: "host=flag user=flag pwd=flag",
 				settedServerHostPortEnv: "",
 				settedBaseURLEnv: "",
 			},
 			output: output{
 				serverHostPort: "blabla:80",
 				baseURL: "http://blabla:80",
+				fileStoragePath: "/flag/path",
+				databaseDSN: "host=flag user=flag pwd=flag",
 			},
 		},
 		{
@@ -63,10 +71,14 @@ func TestLoadFromFlag(t *testing.T) {
 				settedBaseURLFlag: "",
 				settedServerHostPortEnv: "test:8080",
 				settedBaseURLEnv: "http://test:8080",
+				settedFileStoragePathEnv: "/env/path",
+				settedDatabaseDSNEnv: "host=env user=env pwd=env",
 			},
 			output: output{
 				serverHostPort: "test:8080",
 				baseURL: "http://test:8080",
+				fileStoragePath: "/env/path",
+				databaseDSN: "host=env user=env pwd=env",
 			},
 		},
 		{
@@ -80,6 +92,9 @@ func TestLoadFromFlag(t *testing.T) {
 			output: output{
 				serverHostPort: "test:8080",
 				baseURL: "http://localhost:8080",
+				//
+				fileStoragePath: "/tmp/short-url-db.json",
+				databaseDSN: "",
 			},
 		},
 		{
@@ -93,6 +108,9 @@ func TestLoadFromFlag(t *testing.T) {
 			output: output{
 				serverHostPort: "blabla:80",
 				baseURL: "http://test:8080",
+				//
+				fileStoragePath: "/tmp/short-url-db.json",
+				databaseDSN: "",
 			},
 		},
 		{
@@ -106,6 +124,9 @@ func TestLoadFromFlag(t *testing.T) {
 			output: output{
 				serverHostPort: "test:8080",
 				baseURL: "http://blabla:80",
+				//
+				fileStoragePath: "/tmp/short-url-db.json",
+				databaseDSN: "",
 			},
 		},
 		{
@@ -127,7 +148,7 @@ func TestLoadFromFlag(t *testing.T) {
 				settedFileStoragePathEnv: "/path/env",
 			},
 			output: output{
-				fileStoragePath: "path/env",
+				fileStoragePath: "/path/env",
 				//
 				baseURL: "http://localhost:8080",
 				serverHostPort: "localhost:8080",
@@ -140,7 +161,7 @@ func TestLoadFromFlag(t *testing.T) {
 				settedFileStoragePathEnv: "",
 			},
 			output: output{
-				fileStoragePath: "./",
+				fileStoragePath: "/tmp/short-url-db.json",
 				//
 				baseURL: "http://localhost:8080",
 				serverHostPort: "localhost:8080",
@@ -156,6 +177,7 @@ func TestLoadFromFlag(t *testing.T) {
 				//
 				baseURL: "http://localhost:8080",
 				serverHostPort: "localhost:8080",
+				fileStoragePath: "/tmp/short-url-db.json",
 			},
 		},
 		{
@@ -169,6 +191,7 @@ func TestLoadFromFlag(t *testing.T) {
 				//
 				baseURL: "http://localhost:8080",
 				serverHostPort: "localhost:8080",
+				fileStoragePath: "/tmp/short-url-db.json",
 			},
 		},
 		{
@@ -182,6 +205,7 @@ func TestLoadFromFlag(t *testing.T) {
 				//
 				baseURL: "http://localhost:8080",
 				serverHostPort: "localhost:8080",
+				fileStoragePath: "/tmp/short-url-db.json",
 			},
 		},
 	}
@@ -197,11 +221,21 @@ func TestLoadFromFlag(t *testing.T) {
 			if tt.input.settedBaseURLFlag != "" {
 				os.Args = append(os.Args, "-b", tt.input.settedBaseURLFlag)
 			}
+			if tt.input.settedFileStoragePathFlag != "" {
+				os.Args = append(os.Args, "-f", tt.input.settedFileStoragePathFlag)
+			}
+			if tt.input.settedDatabaseDSNFlag != "" {
+				os.Args = append(os.Args, "-d", tt.input.settedDatabaseDSNFlag)
+			}
 
 			// настраиваем env для теста
 			err := os.Unsetenv("SERVER_ADDRESS")
 			assert.NoError(t, err)
 			err = os.Unsetenv("BASE_URL")
+			assert.NoError(t, err)
+			err = os.Unsetenv("FILE_STORAGE_PATH")
+			assert.NoError(t, err)
+			err = os.Unsetenv("DATABASE_DSN")
 			assert.NoError(t, err)
 			if tt.input.settedServerHostPortEnv != "" {
 				err := os.Setenv("SERVER_ADDRESS", tt.input.settedServerHostPortEnv)
@@ -211,12 +245,22 @@ func TestLoadFromFlag(t *testing.T) {
 				err := os.Setenv("BASE_URL", tt.input.settedBaseURLEnv)
 				assert.NoError(t, err)
 			}
+			if tt.input.settedFileStoragePathEnv != "" {
+				err := os.Setenv("FILE_STORAGE_PATH", tt.input.settedFileStoragePathEnv)
+				assert.NoError(t, err)
+			}
+			if tt.input.settedDatabaseDSNEnv != "" {
+				err := os.Setenv("DATABASE_DSN", tt.input.settedDatabaseDSNEnv)
+				assert.NoError(t, err)
+			}
 
 			// проверяем
 			resetCommandLineFlagSet()
 			config := LoadFromFlag()
 			assert.Equal(t, tt.output.serverHostPort, config.ServerHostPort, "Ожидается что хост и порт сервера = %v, по факту = %v", tt.output.serverHostPort, config.ServerHostPort)
 			assert.Equal(t, tt.output.baseURL, config.BaseURL, "Ожидается что base URL = %v, по факту = %v", tt.output.baseURL, config.BaseURL)
+			assert.Equal(t, tt.output.fileStoragePath, config.FileStoragePath, "Ожидается что fileStoragePath = %v, по факту = %v", tt.output.fileStoragePath, config.FileStoragePath)
+			assert.Equal(t, tt.output.databaseDSN, config.Database.DSN, "Ожидается что databaseDSN = %v, по факту = %v", tt.output.databaseDSN, config.Database.DSN)
 
 			// восстанавливаем флаги
 			os.Args = oldOsArgs
