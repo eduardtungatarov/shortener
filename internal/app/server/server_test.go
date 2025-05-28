@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/logger"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
+	"github.com/eduardtungatarov/shortener/internal/app/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -39,6 +42,7 @@ func (s *mockStorage) Get(key string) (value string, ok bool) {
 func TestServer(t *testing.T) {
 	type input struct {
 		preloadedStorage handlers.Storage
+		preloadedPinger handlers.Pinger
 		httpMethod string
 		requestURI string
 		contentType string
@@ -302,6 +306,48 @@ func TestServer(t *testing.T) {
 				response: ``,
 			},
 		},
+		{
+			name: "get_ping_success",
+			input: input{
+				preloadedStorage: nil,
+				preloadedPinger: func() handlers.Pinger {
+					ctrl := gomock.NewController(t)
+					m := mocks.NewMockPinger(ctrl)
+					m.EXPECT().Ping(gomock.Any()).Return(nil)
+					return m
+				}(),
+				httpMethod: "GET",
+				requestURI: "/ping",
+				contentType: "",
+				body: "",
+			},
+			output: output{
+				statusCode: 200,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "get_ping_error",
+			input: input{
+				preloadedStorage: nil,
+				preloadedPinger: func() handlers.Pinger {
+					ctrl := gomock.NewController(t)
+					m := mocks.NewMockPinger(ctrl)
+					m.EXPECT().Ping(gomock.Any()).Return(errors.New("ping failed"))
+					return m
+				}(),
+				httpMethod: "GET",
+				requestURI: "/ping",
+				contentType: "",
+				body: "",
+			},
+			output: output{
+				statusCode: 500,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -318,7 +364,7 @@ func TestServer(t *testing.T) {
 				context.Background(),
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
-				nil,
+				tt.input.preloadedPinger,
 			)
 
 			r := getRouter(h, m)
