@@ -26,6 +26,8 @@ func main() {
 		log.Fatalf("failed to load storage: %v", err)
 	}
 
+
+
 	m := middleware.MakeMiddleware(log)
 	h := handlers.MakeHandler(s, cfg.BaseURL)
 

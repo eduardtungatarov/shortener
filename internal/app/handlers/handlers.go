@@ -111,6 +111,12 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
+
+	//res.WriteHeader(http.StatusInternalServerError)
+	res.WriteHeader(http.StatusOK)
+}
+
 func (h *Handler) getKey(url []byte) string {
 	hash := md5.Sum(url)
 	hashStr := fmt.Sprintf("%x", hash)

@@ -22,6 +22,11 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 		h.HandleGet,
 	)
 
+	r.Get(
+		"/ping",
+		h.HandleGetPing,
+	)
+
 	gzipReqG := r.Group(func(r chi.Router) {
 		r.Use(m.WithGzipReq)
 	})
