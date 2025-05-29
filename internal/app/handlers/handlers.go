@@ -14,9 +14,6 @@ import (
 type Storage interface {
 	Set(key, value string) error
 	Get(key string) (value string, ok bool)
-}
-
-type Pinger interface {
 	Ping(ctx context.Context) error
 }
 
@@ -24,15 +21,13 @@ type Handler struct {
 	ctx context.Context
 	storage Storage
 	baseURL string
-	pinger Pinger
 }
 
-func MakeHandler(ctx context.Context, storage Storage, baseURL string, pinger Pinger) *Handler {
+func MakeHandler(ctx context.Context, storage Storage, baseURL string) *Handler {
 	return &Handler{
 		ctx: ctx,
 		storage: storage,
 		baseURL: baseURL,
-		pinger: pinger,
 	}
 }
 
@@ -121,7 +116,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
-	err := h.pinger.Ping(h.ctx)
+	err := h.storage.Ping(h.ctx)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return

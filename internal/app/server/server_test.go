@@ -39,10 +39,13 @@ func (s *mockStorage) Get(key string) (value string, ok bool) {
 	return v, ok
 }
 
+func (s *mockStorage) Ping(ctx context.Context) error {
+	return nil
+}
+
 func TestServer(t *testing.T) {
 	type input struct {
 		preloadedStorage handlers.Storage
-		preloadedPinger handlers.Pinger
 		httpMethod string
 		requestURI string
 		contentType string
@@ -309,10 +312,9 @@ func TestServer(t *testing.T) {
 		{
 			name: "get_ping_success",
 			input: input{
-				preloadedStorage: nil,
-				preloadedPinger: func() handlers.Pinger {
+				preloadedStorage: func() handlers.Storage {
 					ctrl := gomock.NewController(t)
-					m := mocks.NewMockPinger(ctrl)
+					m := mocks.NewMockStorage(ctrl)
 					m.EXPECT().Ping(gomock.Any()).Return(nil)
 					return m
 				}(),
@@ -330,10 +332,9 @@ func TestServer(t *testing.T) {
 		{
 			name: "get_ping_error",
 			input: input{
-				preloadedStorage: nil,
-				preloadedPinger: func() handlers.Pinger {
+				preloadedStorage: func() handlers.Storage {
 					ctrl := gomock.NewController(t)
-					m := mocks.NewMockPinger(ctrl)
+					m := mocks.NewMockStorage(ctrl)
 					m.EXPECT().Ping(gomock.Any()).Return(errors.New("ping failed"))
 					return m
 				}(),
@@ -364,7 +365,6 @@ func TestServer(t *testing.T) {
 				context.Background(),
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
-				tt.input.preloadedPinger,
 			)
 
 			r := getRouter(h, m)

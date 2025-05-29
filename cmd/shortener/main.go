@@ -30,14 +30,8 @@ func main() {
 		log.Fatalf("failed to load storage: %v", err)
 	}
 
-	db, err := storage.MakeDB(cfg.Database)
-	if err != nil {
-		log.Fatalf("failed to make database: %v", err)
-	}
-	defer db.SQLDB.Close()
-
 	m := middleware.MakeMiddleware(log)
-	h := handlers.MakeHandler(ctx, s, cfg.BaseURL, db)
+	h := handlers.MakeHandler(ctx, s, cfg.BaseURL)
 
 	err = server.Run(cfg, h, m)
 	if err != nil {

@@ -7,28 +7,40 @@ import (
 	"time"
 )
 
-type DB struct {
-	SQLDB *sql.DB
-	Timeout time.Duration
+type dbStorage struct {
+	sqlDB *sql.DB
+	timeout time.Duration
 }
 
-func MakeDB(cfg config.Database) (*DB, error)  {
+func MakeDBStorage(cfg config.Database) (*dbStorage, error)  {
 	SQLDB, err := sql.Open("pgx", cfg.DSN)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DB{
-		SQLDB: SQLDB,
-		Timeout: cfg.Timeout,
+	return &dbStorage{
+		sqlDB: SQLDB,
+		timeout: cfg.Timeout,
 	}, nil
 }
 
-func (db *DB) Ping(ctx context.Context) error {
-	ctx, cancel := context.WithTimeout(ctx, db.Timeout)
+func (s *dbStorage) Set(key, value string) error {
+	return nil
+}
+
+func (s *dbStorage) Get(key string) (value string, ok bool) {
+	return "", false
+}
+
+func (s *dbStorage) Ping(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
-	if err := db.SQLDB.PingContext(ctx); err != nil {
+	if err := s.sqlDB.PingContext(ctx); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *dbStorage) Close() error {
+	return s.sqlDB.Close()
 }

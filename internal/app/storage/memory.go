@@ -1,5 +1,7 @@
 package storage
 
+import "context"
+
 type memoryStorage struct {
 	m map[string]string
 }
@@ -18,4 +20,8 @@ func (s *memoryStorage) Set(key, value string) error {
 func (s *memoryStorage) Get(key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
+}
+
+func (s *memoryStorage) Ping(ctx context.Context) error {
+	return nil
 }

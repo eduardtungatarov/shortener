@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"os"
@@ -69,4 +70,8 @@ func (s *fileStorage) Set(key, value string) error {
 func (s *fileStorage) Get(key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
+}
+
+func (s *fileStorage) Ping(ctx context.Context) error {
+	return nil
 }
