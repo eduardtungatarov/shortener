@@ -12,8 +12,8 @@ import (
 )
 
 type Storage interface {
-	Set(key, value string) error
-	Get(key string) (value string, ok bool)
+	Set(ctx context.Context, key, value string) error
+	Get(ctx context.Context, key string) (value string, ok bool)
 	Ping(ctx context.Context) error
 }
 
@@ -46,7 +46,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
 	}
 
 	key := h.getKey(body)
-	err = h.storage.Set(key, string(body))
+	err = h.storage.Set(h.ctx, key, string(body))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Не удалось сохранить url: %v", err)
@@ -65,7 +65,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "shortUrl")
 
-	url, ok := h.storage.Get(shortURL)
+	url, ok := h.storage.Get(h.ctx, shortURL)
 	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
 		return;
@@ -94,7 +94,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 
 	// Сохраняем url.
 	key := h.getKey([]byte(reqStr.URL))
-	err := h.storage.Set(key, reqStr.URL)
+	err := h.storage.Set(h.ctx, key, reqStr.URL)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return;

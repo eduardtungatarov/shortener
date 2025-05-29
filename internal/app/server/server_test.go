@@ -29,12 +29,12 @@ func makeMockStorage() *mockStorage{
 	}
 }
 
-func (s *mockStorage) Set(key, value string) error {
+func (s *mockStorage) Set(ctx context.Context, key, value string) error {
 	s.m[key] = value
 	return nil
 }
 
-func (s *mockStorage) Get(key string) (value string, ok bool) {
+func (s *mockStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
 }
@@ -100,7 +100,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(),"0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "GET",
@@ -149,7 +149,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(),"0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "GET",
@@ -168,7 +168,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "GET",
@@ -187,7 +187,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "PATCH",

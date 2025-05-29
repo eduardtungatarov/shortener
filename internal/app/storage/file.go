@@ -34,7 +34,7 @@ func MakeFileStorage(filename string) (*fileStorage, error) {
 	}, nil
 }
 
-func (s *fileStorage) Load() error {
+func (s *fileStorage) Load(ctx context.Context) error {
 	v := storageString{}
 
 	for  {
@@ -52,7 +52,7 @@ func (s *fileStorage) Load() error {
 	return nil
 }
 
-func (s *fileStorage) Set(key, value string) error {
+func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 	v := storageString{
 		UUID: uuid.New().String(),
 		ShortURL: key,
@@ -67,7 +67,7 @@ func (s *fileStorage) Set(key, value string) error {
 	return nil
 }
 
-func (s *fileStorage) Get(key string) (value string, ok bool) {
+func (s *fileStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
 }

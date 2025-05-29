@@ -12,12 +12,12 @@ func MakeMemoryStorage() *memoryStorage {
 	}
 }
 
-func (s *memoryStorage) Set(key, value string) error {
+func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
 	s.m[key] = value
 	return nil
 }
 
-func (s *memoryStorage) Get(key string) (value string, ok bool) {
+func (s *memoryStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
 }
