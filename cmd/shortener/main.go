@@ -21,7 +21,7 @@ func main() {
 
 	cfg := config.LoadFromFlag()
 
-	s, err := storage.MakeStorage(cfg.FileStoragePath)
+	s, err := storage.MakeFileStorage(cfg.FileStoragePath)
 	if err != nil {
 		log.Fatalf("failed to make storage: %v", err)
 	}

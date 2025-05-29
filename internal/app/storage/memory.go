@@ -1,0 +1,21 @@
+package storage
+
+type memoryStorage struct {
+	m map[string]string
+}
+
+func MakeMemoryStorage() *memoryStorage {
+	return &memoryStorage{
+		m: make(map[string]string),
+	}
+}
+
+func (s *memoryStorage) Set(key, value string) error {
+	s.m[key] = value
+	return nil
+}
+
+func (s *memoryStorage) Get(key string) (value string, ok bool) {
+	v, ok := s.m[key]
+	return v, ok
+}

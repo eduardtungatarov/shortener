@@ -12,20 +12,20 @@ type storageString struct {
 	OriginalURL string `json:"original_url"`
 }
 
-type storage struct {
+type fileStorage struct {
 	m map[string]string
 	file *os.File
 	encoder *json.Encoder
 	decoder *json.Decoder
 }
 
-func MakeStorage(filename string) (*storage, error) {
+func MakeFileStorage(filename string) (*fileStorage, error) {
 	file, err := os.OpenFile(filename, os.O_CREATE | os.O_RDWR |os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &storage{
+	return &fileStorage{
 		m: make(map[string]string),
 		file: file,
 		encoder: json.NewEncoder(file),
@@ -33,7 +33,7 @@ func MakeStorage(filename string) (*storage, error) {
 	}, nil
 }
 
-func (s *storage) Load() error {
+func (s *fileStorage) Load() error {
 	v := storageString{}
 
 	for  {
@@ -51,7 +51,7 @@ func (s *storage) Load() error {
 	return nil
 }
 
-func (s *storage) Set(key, value string) error {
+func (s *fileStorage) Set(key, value string) error {
 	v := storageString{
 		UUID: uuid.New().String(),
 		ShortURL: key,
@@ -66,7 +66,7 @@ func (s *storage) Set(key, value string) error {
 	return nil
 }
 
-func (s *storage) Get(key string) (value string, ok bool) {
+func (s *fileStorage) Get(key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
 }
