@@ -23,6 +23,3 @@ test11:
 
 gotest:
 	go test -v ./...
-
-govet:
-	go vet ./...
