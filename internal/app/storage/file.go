@@ -75,3 +75,7 @@ func (s *fileStorage) Get(ctx context.Context, key string) (value string, ok boo
 func (s *fileStorage) Ping(ctx context.Context) error {
 	return nil
 }
+
+func (s *fileStorage) Close() error {
+	return nil
+}

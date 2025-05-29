@@ -21,10 +21,11 @@ func main() {
 
 	cfg := config.LoadFromFlag()
 
-	s, err := storage.MakeDBStorage(cfg.Database)
+	s, err := storage.MakeStorage(cfg)
 	if err != nil {
 		log.Fatalf("failed to make storage: %v", err)
 	}
+	defer s.Close()
 	err = s.Load(ctx)
 	if err != nil {
 		log.Fatalf("failed to load storage: %v", err)

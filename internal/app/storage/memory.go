@@ -12,6 +12,10 @@ func MakeMemoryStorage() *memoryStorage {
 	}
 }
 
+func (s *memoryStorage) Load(ctx context.Context) error {
+	return nil
+}
+
 func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
 	s.m[key] = value
 	return nil
@@ -23,5 +27,9 @@ func (s *memoryStorage) Get(ctx context.Context, key string) (value string, ok b
 }
 
 func (s *memoryStorage) Ping(ctx context.Context) error {
+	return nil
+}
+
+func (s *memoryStorage) Close() error {
 	return nil
 }

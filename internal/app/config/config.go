@@ -9,8 +9,8 @@ import (
 const (
 	DefaultServerHostPort = "localhost:8080"
 	DefaultBaseURL        = "http://localhost:8080"
-	FileStoragePath       = "/tmp/short-url-db.json"
-	DatabaseDSN       = ""
+	DefaultFileStoragePath       = "/tmp/short-url-db.json"
+	DefaultDatabaseDSN       = ""
 )
 
 type Config struct {
@@ -28,8 +28,8 @@ type Database struct {
 func LoadFromFlag() Config  {
 	flagServer := flag.String("a", DefaultServerHostPort, "отвечает за адрес запуска HTTP-сервера")
 	flagBaseURL := flag.String("b", DefaultBaseURL, "отвечает за базовый адрес результирующего сокращённого URL")
-	flagFileStoragePath := flag.String("f", FileStoragePath, "путь до файла, куда сохраняются все сокращенные URL")
-	databaseDSN := flag.String("d", DatabaseDSN, "строка с адресом подключения к БД")
+	flagFileStoragePath := flag.String("f", DefaultFileStoragePath, "путь до файла, куда сохраняются все сокращенные URL")
+	databaseDSN := flag.String("d", DefaultDatabaseDSN, "строка с адресом подключения к БД")
 	flag.Parse()
 
 	aEnv, ok := os.LookupEnv("SERVER_ADDRESS")
