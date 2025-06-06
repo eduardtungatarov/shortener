@@ -21,5 +21,10 @@ test11:
           -binary-path=cmd/shortener/shortener \
           -database-dsn='host=localhost port=5432 user=myuser password=mypassword dbname=mydatabase sslmode=disable'
 
+test12:
+	shortenertestbeta -test.v -test.run=^TestIteration12$ \
+          -binary-path=cmd/shortener/shortener \
+          -database-dsn='host=localhost port=5432 user=myuser password=mypassword dbname=mydatabase sslmode=disable'
+
 gotest:
 	go test -v ./...

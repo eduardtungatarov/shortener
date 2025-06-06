@@ -76,3 +76,17 @@ func (mr *MockStorageMockRecorder) Set(arg0, arg1, arg2 interface{}) *gomock.Cal
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockStorage)(nil).Set), arg0, arg1, arg2)
 }
+
+// SetBatch mocks base method.
+func (m *MockStorage) SetBatch(arg0 context.Context, arg1 map[string]string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetBatch", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetBatch indicates an expected call of SetBatch.
+func (mr *MockStorageMockRecorder) SetBatch(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetBatch", reflect.TypeOf((*MockStorage)(nil).SetBatch), arg0, arg1)
+}

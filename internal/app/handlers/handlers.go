@@ -170,7 +170,7 @@ func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request)
 	}
 
 	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusOK)
+	res.WriteHeader(http.StatusCreated)
 	_, err = res.Write(resp)
 	if err != nil {
 		log.Printf("response write: %v", err)

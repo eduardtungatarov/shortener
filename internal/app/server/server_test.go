@@ -34,6 +34,16 @@ func (s *mockStorage) Set(ctx context.Context, key, value string) error {
 	return nil
 }
 
+func (s *mockStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
+	for key, originalURL := range keyValues {
+		err := s.Set(ctx, key, originalURL)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *mockStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
@@ -349,6 +359,55 @@ func TestServer(t *testing.T) {
 				response: ``,
 			},
 		},
+		{
+			name: "success_post_batch",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten/batch",
+				contentType: "application/json",
+				body: `
+				[
+				  {
+					"correlation_id": "1",
+					"original_url": "https://ya.ru"
+				  },
+				  {
+					"correlation_id": "2",
+					"original_url": "https://r0.ru"
+				  }
+				]
+				`,
+			},
+			output: output{
+				statusCode: 201,
+				contentTypeHeaderValue: "application/json",
+				response: `[{"correlation_id":"1"`,
+			},
+		},
+		{
+			name: "success_post_batch_with_content_encoding",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten/batch",
+				contentType: "application/json",
+				contentEncoding: "gzip",
+				body: `
+				[
+				  {
+					"correlation_id": "1",
+					"original_url": "https://ya.ru"
+				  }
+				]
+				`,
+			},
+			output: output{
+				statusCode: 201,
+				locationHeaderValue: "",
+				response: "http://localhost:8080/",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -365,6 +424,7 @@ func TestServer(t *testing.T) {
 				context.Background(),
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
+				log,
 			)
 
 			r := getRouter(h, m)
@@ -418,7 +478,7 @@ func TestServer(t *testing.T) {
 				respBody, err := io.ReadAll(body)
 				require.NoError(t, err)
 
-				assert.Contains(t, string(respBody), tt.output.response, "Ссылка в ответе должна начинаться с %v, получено = %v", tt.output.response, string(respBody))
+				assert.Contains(t, string(respBody), tt.output.response, "Ответ должен содержать %v, получено = %v", tt.output.response, string(respBody))
 			}
 		})
 	}
