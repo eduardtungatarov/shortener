@@ -13,12 +13,12 @@ import (
 )
 
 type OriginalURL struct{
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	OriginalURL string `json:"original_url"`
 }
 
 type ShortURL struct{
-	CorrelationId string `json:"correlation_id"`
+	CorrelationID string `json:"correlation_id"`
 	ShortURL string `json:"short_url"`
 	Key string `json:"-"`
 	OriginalURL string `json:"-"`
@@ -193,7 +193,7 @@ func (h *Handler) getShortURLBatch(batch []OriginalURL) []ShortURL {
 	for _, b := range batch {
 		key := h.getKey([]byte(b.OriginalURL))
 		res = append(res, ShortURL{
-			CorrelationId: b.CorrelationId,
+			CorrelationID: b.CorrelationID,
 			ShortURL: h.baseURL+"/"+key,
 			Key: key,
 			OriginalURL: b.OriginalURL,
