@@ -68,6 +68,12 @@ func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 }
 
 func (s *fileStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
+	for key, originalURL := range keyValues {
+		err := s.Set(ctx, key, originalURL)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
