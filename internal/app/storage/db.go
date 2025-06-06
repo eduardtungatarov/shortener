@@ -45,6 +45,24 @@ func (s *dbStorage) Set(ctx context.Context, key, value string) error {
 	return err
 }
 
+func (s *dbStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
+	tx, err := s.sqlDB.Begin()
+	if err != nil {
+		return err
+	}
+
+	for key, value := range keyValues {
+		_, err := tx.ExecContext(ctx,
+			"INSERT INTO urls (uuid, short_url, original_url)"+
+				" VALUES($1, $2, $3)", uuid.NewString(), key, value)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
 func (s *dbStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()

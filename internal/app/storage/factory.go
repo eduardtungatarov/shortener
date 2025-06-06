@@ -8,6 +8,7 @@ import (
 type Storage interface {
 	Load(ctx context.Context) error
 	Set(ctx context.Context, key, value string) error
+	SetBatch(ctx context.Context, keyValues map[string]string) error
 	Get(ctx context.Context, key string) (value string, ok bool)
 	Ping(ctx context.Context) error
 	Close() error

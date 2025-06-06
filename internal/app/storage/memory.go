@@ -21,6 +21,10 @@ func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
 	return nil
 }
 
+func (s *memoryStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
+	return nil
+}
+
 func (s *memoryStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok

@@ -67,6 +67,10 @@ func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 	return nil
 }
 
+func (s *fileStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
+	return nil
+}
+
 func (s *fileStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok

@@ -6,13 +6,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
 	"io"
 	"log"
 	"net/http"
 )
 
+type OriginalURL struct{
+	CorrelationId string `json:"correlation_id"`
+	OriginalURL string `json:"original_url"`
+}
+
+type ShortURL struct{
+	CorrelationId string `json:"correlation_id"`
+	ShortURL string `json:"short_url"`
+	Key string `json:"-"`
+	OriginalURL string `json:"-"`
+}
+
 type Storage interface {
 	Set(ctx context.Context, key, value string) error
+	SetBatch(ctx context.Context, keyValues map[string]string) error
 	Get(ctx context.Context, key string) (value string, ok bool)
 	Ping(ctx context.Context) error
 }
@@ -21,13 +35,15 @@ type Handler struct {
 	ctx context.Context
 	storage Storage
 	baseURL string
+	log *zap.SugaredLogger
 }
 
-func MakeHandler(ctx context.Context, storage Storage, baseURL string) *Handler {
+func MakeHandler(ctx context.Context, storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
 	return &Handler{
 		ctx: ctx,
 		storage: storage,
 		baseURL: baseURL,
+		log: log,
 	}
 }
 
@@ -123,6 +139,68 @@ func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
 	}
 
 	res.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request) {
+	var batch []OriginalURL
+
+	defer req.Body.Close()
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&batch); err != nil {
+		log.Printf("decode batch: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
+	}
+
+	shortURLBatch := h.getShortURLBatch(batch)
+	keyValueBatch := h.getKeyBatch(shortURLBatch)
+
+	err := h.storage.SetBatch(h.ctx, keyValueBatch)
+	if err != nil {
+		log.Printf("storage SetBatch: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
+	}
+
+	resp, err := json.Marshal(&shortURLBatch)
+	if err != nil {
+		log.Printf("marshal to shortURLBatch: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+	_, err = res.Write(resp)
+	if err != nil {
+		log.Printf("response write: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
+	}
+}
+
+func (h *Handler) getKeyBatch(batch []ShortURL) map[string]string {
+	res := map[string]string{}
+	for _, b := range batch {
+		res[b.Key] = b.OriginalURL
+	}
+	return res
+}
+
+func (h *Handler) getShortURLBatch(batch []OriginalURL) []ShortURL {
+	var res []ShortURL
+
+	for _, b := range batch {
+		key := h.getKey([]byte(b.OriginalURL))
+		res = append(res, ShortURL{
+			CorrelationId: b.CorrelationId,
+			ShortURL: h.baseURL+"/"+key,
+			Key: key,
+			OriginalURL: b.OriginalURL,
+		})
+	}
+
+	return res
 }
 
 func (h *Handler) getKey(url []byte) string {

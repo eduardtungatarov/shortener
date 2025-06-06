@@ -37,6 +37,7 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	gzipReqG.Group(func(r chi.Router) {
 		r.Use(m.WithGzipResp, m.WithJSONReqCheck)
 		r.Post("/api/shorten", h.HandleShorten)
+		r.Post("/api/shorten/batch", h.HandleShortenBatch)
 	})
 
 	return r
