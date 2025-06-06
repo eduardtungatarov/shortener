@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/eduardtungatarov/shortener/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 	"io"
@@ -63,13 +65,19 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
 
 	key := h.getKey(body)
 	err = h.storage.Set(h.ctx, key, string(body))
-	if err != nil {
+	isConflict := errors.Is(err, storage.ErrConflict)
+	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Не удалось сохранить url: %v", err)
 		return;
 	}
 
-	res.WriteHeader(http.StatusCreated)
+	if isConflict {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
+
 	_, err = res.Write([]byte(h.baseURL+"/"+key))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -111,7 +119,8 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	// Сохраняем url.
 	key := h.getKey([]byte(reqStr.URL))
 	err := h.storage.Set(h.ctx, key, reqStr.URL)
-	if err != nil {
+	isConflict := errors.Is(err, storage.ErrConflict)
+	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
 		return;
 	}
@@ -123,7 +132,13 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	respStr.Result = h.baseURL+"/"+key
 
 	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusCreated)
+
+	if isConflict {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
+
 	enc := json.NewEncoder(res)
 	if err := enc.Encode(respStr); err != nil {
 		res.WriteHeader(http.StatusInternalServerError)

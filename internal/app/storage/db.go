@@ -3,10 +3,15 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/google/uuid"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5/pgconn"
 	"time"
 )
+
+var ErrConflict = errors.New("data conflict")
 
 type dbStorage struct {
 	sqlDB *sql.DB
@@ -42,6 +47,14 @@ func (s *dbStorage) Set(ctx context.Context, key, value string) error {
 	_, err := s.sqlDB.ExecContext(ctx, `INSERT INTO urls (uuid, short_url, original_url)
 		VALUES ($1, $2, $3)
 	`, uuid.NewString(), key, value)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgerrcode.IsIntegrityConstraintViolation(pgErr.Code) {
+			err = ErrConflict
+		}
+	}
+
 	return err
 }
 
