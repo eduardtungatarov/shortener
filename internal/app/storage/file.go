@@ -11,10 +11,12 @@ type storageString struct {
 	UUID string `json:"uuid"`
 	ShortURL string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+	UserUUID string `json:"user_uuid"`
 }
 
 type fileStorage struct {
 	m map[string]string
+	userLinks map[string][]string
 	file *os.File
 	encoder *json.Encoder
 	decoder *json.Decoder
@@ -28,6 +30,7 @@ func MakeFileStorage(filename string) (*fileStorage, error) {
 
 	return &fileStorage{
 		m: make(map[string]string),
+		userLinks: make(map[string][]string),
 		file: file,
 		encoder: json.NewEncoder(file),
 		decoder: json.NewDecoder(file),
@@ -47,16 +50,20 @@ func (s *fileStorage) Load(ctx context.Context) error {
 		}
 
 		s.m[v.ShortURL] = v.OriginalURL
+		s.userLinks[v.UserUUID] = append(s.userLinks[v.UserUUID], v.ShortURL)
 	}
 
 	return nil
 }
 
 func (s *fileStorage) Set(ctx context.Context, key, value string) error {
+	userId := getUserIDOrPanic(ctx)
+
 	v := storageString{
 		UUID: uuid.New().String(),
 		ShortURL: key,
 		OriginalURL: value,
+		UserUUID: userId,
 	}
 	err := s.encoder.Encode(v)
 	if err != nil {
@@ -64,6 +71,7 @@ func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 	}
 
 	s.m[key] = value
+	s.userLinks[userId] = append(s.userLinks[userId], key)
 	return nil
 }
 

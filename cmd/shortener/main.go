@@ -32,7 +32,7 @@ func main() {
 	}
 
 	m := middleware.MakeMiddleware(log)
-	h := handlers.MakeHandler(ctx, s, cfg.BaseURL, log)
+	h := handlers.MakeHandler(s, cfg.BaseURL, log)
 
 	err = server.Run(cfg, h, m)
 	if err != nil {

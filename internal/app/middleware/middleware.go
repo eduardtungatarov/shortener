@@ -91,4 +91,3 @@ func (m *Middleware) WithJSONReqCheck(next http.Handler) http.Handler {
 		next.ServeHTTP(res, req)
 	})
 }
-

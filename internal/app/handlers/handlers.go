@@ -34,15 +34,13 @@ type Storage interface {
 }
 
 type Handler struct {
-	ctx context.Context
 	storage Storage
 	baseURL string
 	log *zap.SugaredLogger
 }
 
-func MakeHandler(ctx context.Context, storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
+func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
 	return &Handler{
-		ctx: ctx,
 		storage: storage,
 		baseURL: baseURL,
 		log: log,
@@ -64,7 +62,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
 	}
 
 	key := h.getKey(body)
-	err = h.storage.Set(h.ctx, key, string(body))
+	err = h.storage.Set(req.Context(), key, string(body))
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -89,7 +87,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "shortUrl")
 
-	url, ok := h.storage.Get(h.ctx, shortURL)
+	url, ok := h.storage.Get(req.Context(), shortURL)
 	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
 		return;
@@ -118,7 +116,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 
 	// Сохраняем url.
 	key := h.getKey([]byte(reqStr.URL))
-	err := h.storage.Set(h.ctx, key, reqStr.URL)
+	err := h.storage.Set(req.Context(), key, reqStr.URL)
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -147,7 +145,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 }
 
 func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
-	err := h.storage.Ping(h.ctx)
+	err := h.storage.Ping(req.Context())
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -170,7 +168,7 @@ func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request)
 	shortURLBatch := h.getShortURLBatch(batch)
 	keyValueBatch := h.getKeyBatch(shortURLBatch)
 
-	err := h.storage.SetBatch(h.ctx, keyValueBatch)
+	err := h.storage.SetBatch(req.Context(), keyValueBatch)
 	if err != nil {
 		log.Printf("storage SetBatch: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)

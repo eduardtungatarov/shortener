@@ -1,14 +1,18 @@
 package storage
 
-import "context"
+import (
+	"context"
+)
 
 type memoryStorage struct {
 	m map[string]string
+	userLinks map[string][]string
 }
 
 func MakeMemoryStorage() *memoryStorage {
 	return &memoryStorage{
 		m: make(map[string]string),
+		userLinks: make(map[string][]string),
 	}
 }
 
@@ -17,7 +21,9 @@ func (s *memoryStorage) Load(ctx context.Context) error {
 }
 
 func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
+	userId := getUserIDOrPanic(ctx)
 	s.m[key] = value
+	s.userLinks[userId] = append(s.userLinks[userId], key)
 	return nil
 }
 

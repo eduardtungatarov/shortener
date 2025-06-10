@@ -37,16 +37,38 @@ func (s *dbStorage) Load(ctx context.Context) error {
         original_url TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_short_url ON urls (short_url);`)
-	return err
+	if err != nil {
+		return err
+	}
+
+	query := `
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT 1 
+            FROM information_schema.columns 
+            WHERE table_name='urls' 
+            AND column_name='user_uuid'
+        ) THEN
+            ALTER TABLE urls ADD COLUMN user_uuid UUID;
+        END IF;
+    END $$;`
+
+	_, err = s.sqlDB.ExecContext(ctx, query)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *dbStorage) Set(ctx context.Context, key, value string) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	_, err := s.sqlDB.ExecContext(ctx, `INSERT INTO urls (uuid, short_url, original_url)
-		VALUES ($1, $2, $3)
-	`, uuid.NewString(), key, value)
+	_, err := s.sqlDB.ExecContext(ctx, `INSERT INTO urls (uuid, short_url, original_url, user_uuid)
+		VALUES ($1, $2, $3, $4)
+	`, uuid.NewString(), key, value, getUserIDOrPanic(ctx))
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -66,8 +88,8 @@ func (s *dbStorage) SetBatch(ctx context.Context, keyValues map[string]string) e
 
 	for key, value := range keyValues {
 		_, err := tx.ExecContext(ctx,
-			"INSERT INTO urls (uuid, short_url, original_url)"+
-				" VALUES($1, $2, $3)", uuid.NewString(), key, value)
+			"INSERT INTO urls (uuid, short_url, original_url, user_uuid)"+
+				" VALUES($1, $2, $3, $4)", uuid.NewString(), key, value, getUserIDOrPanic(ctx))
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -80,7 +102,7 @@ func (s *dbStorage) Get(ctx context.Context, key string) (value string, ok bool)
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	row := s.sqlDB.QueryRowContext(ctx, `SELECT original_url FROM urls WHERE short_url = $1`, key)
+	row := s.sqlDB.QueryRowContext(ctx, `SELECT original_url FROM urls WHERE short_url = $1 and user_uuid = $2`, key, getUserIDOrPanic(ctx))
 
 	var originalURL string
 	err := row.Scan(&originalURL)

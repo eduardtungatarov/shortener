@@ -421,7 +421,6 @@ func TestServer(t *testing.T) {
 
 			m := middleware.MakeMiddleware(log)
 			h := handlers.MakeHandler(
-				context.Background(),
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
 				log,
