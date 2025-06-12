@@ -21,11 +21,13 @@ import (
 
 type mockStorage struct {
 	m map[string]string
+	userLinks map[string][]string
 }
 
 func makeMockStorage() *mockStorage{
 	return &mockStorage{
 		m: make(map[string]string),
+		userLinks: make(map[string][]string),
 	}
 }
 
@@ -410,6 +412,46 @@ func TestServer(t *testing.T) {
 				statusCode: 201,
 				locationHeaderValue: "",
 				response: "http://localhost:8080/",
+			},
+		},
+		{
+			name: "success_user_urls",
+			input: input{
+				preloadedStorage: func() handlers.Storage {
+					ret := []map[string]string{
+						{
+							"original_url": "http://ya.ru",
+							"short_url": "e520966",
+						},
+					}
+					ctrl := gomock.NewController(t)
+					m := mocks.NewMockStorage(ctrl)
+					m.EXPECT().GetByUserID(gomock.Any()).Return(ret, nil)
+					return m
+				}(),
+				httpMethod: "GET",
+				requestURI: "/api/user/urls",
+			},
+			output: output{
+				statusCode: 200,
+				response: `[{"original_url":"http://ya.ru","short_url":"e520966"}]`,
+			},
+		},
+		{
+			name: "nocontent_user_urls",
+			input: input{
+				preloadedStorage: func() handlers.Storage {
+					ret := []map[string]string{}
+					ctrl := gomock.NewController(t)
+					m := mocks.NewMockStorage(ctrl)
+					m.EXPECT().GetByUserID(gomock.Any()).Return(ret, nil)
+					return m
+				}(),
+				httpMethod: "GET",
+				requestURI: "/api/user/urls",
+			},
+			output: output{
+				statusCode: 204,
 			},
 		},
 	}
