@@ -112,6 +112,37 @@ func (s *dbStorage) Get(ctx context.Context, key string) (value string, ok bool)
 	return originalURL, true
 }
 
+func (s *dbStorage) GetByUserId(ctx context.Context) ([]map[string]string, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	rows, err := s.sqlDB.QueryContext(ctx, `SELECT original_url, short_url FROM urls WHERE user_uuid = $1`, getUserIDOrPanic(ctx))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urls []map[string]string
+	for rows.Next() {
+		var v UserURL
+		err = rows.Scan(&v.OriginalURL, &v.ShortURL)
+		if err != nil {
+			return nil, err
+		}
+
+		urls = append(urls, map[string]string{
+			"short_url": v.ShortURL,
+			"original_url": v.OriginalURL,
+		})
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return urls, nil
+}
+
 func (s *dbStorage) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()

@@ -42,6 +42,21 @@ func (s *memoryStorage) Get(ctx context.Context, key string) (value string, ok b
 	return v, ok
 }
 
+func (s *memoryStorage) GetByUserId(ctx context.Context) ([]map[string]string, error) {
+	var urls []map[string]string
+
+	userLinks := s.userLinks[getUserIDOrPanic(ctx)]
+
+	for _, v := range userLinks {
+		urls = append(urls, map[string]string{
+			"short_url": v,
+			"original_url": s.m[v],
+		})
+	}
+
+	return urls, nil
+}
+
 func (s *memoryStorage) Ping(ctx context.Context) error {
 	return nil
 }

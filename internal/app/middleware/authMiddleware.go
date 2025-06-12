@@ -12,6 +12,7 @@ const userIdNameCookie = "userId"
 func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		var userId string
+		var userIdCrypted string
 		var setCookie bool
 
 		c, err := req.Cookie(userIdNameCookie)
@@ -20,15 +21,16 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			userId = generateUserId()
+			userIdCrypted = generateUserId()
 			setCookie = true
 		} else {
-			userIdCrypted := c.Value
-			userId, err = getUserId(userIdCrypted)
-			if err != nil {
-				res.WriteHeader(http.StatusUnauthorized)
-				return
-			}
+			userIdCrypted = c.Value
+		}
+
+		userId, err = getUserId(userIdCrypted)
+		if err != nil {
+			res.WriteHeader(http.StatusUnauthorized)
+			return
 		}
 
 		ctx := req.Context()

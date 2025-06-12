@@ -49,6 +49,10 @@ func (s *mockStorage) Get(ctx context.Context, key string) (value string, ok boo
 	return v, ok
 }
 
+func (s *mockStorage) GetByUserId(ctx context.Context) ([]map[string]string, error) {
+	return make([]map[string]string, 0), nil
+}
+
 func (s *mockStorage) Ping(ctx context.Context) error {
 	return nil
 }
