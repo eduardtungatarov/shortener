@@ -7,7 +7,8 @@ import (
 	"net/http"
 )
 
-const userIDNameCookie string = "userId"
+type UserIdKey string
+const userIDNameCookie UserIdKey = "userId"
 
 func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -15,7 +16,7 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 		var userIDCrypted string
 		var setCookie bool
 
-		c, err := req.Cookie(userIDNameCookie)
+		c, err := req.Cookie(string(userIDNameCookie))
 		if err != nil {
 			if !errors.Is(err, http.ErrNoCookie) {
 				res.WriteHeader(http.StatusInternalServerError)
@@ -39,7 +40,7 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 
 		if setCookie {
 			cookie := &http.Cookie{
-				Name:    userIDNameCookie,
+				Name:    string(userIDNameCookie),
 				Value:   userID,
 			}
 			http.SetCookie(res, cookie)
