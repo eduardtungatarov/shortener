@@ -59,6 +59,12 @@ func (s *dbStorage) Load(ctx context.Context) error {
 		return err
 	}
 
+	_, err = s.sqlDB.ExecContext(ctx, `
+    CREATE INDEX IF NOT EXISTS idx_user_uuid ON urls (user_uuid);`)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
