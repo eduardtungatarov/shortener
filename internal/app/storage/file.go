@@ -57,13 +57,13 @@ func (s *fileStorage) Load(ctx context.Context) error {
 }
 
 func (s *fileStorage) Set(ctx context.Context, key, value string) error {
-	userId := getUserIDOrPanic(ctx)
+	userID := getUserIDOrPanic(ctx)
 
 	v := storageString{
 		UUID: uuid.New().String(),
 		ShortURL: key,
 		OriginalURL: value,
-		UserUUID: userId,
+		UserUUID: userID,
 	}
 	err := s.encoder.Encode(v)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 	}
 
 	s.m[key] = value
-	s.userLinks[userId] = append(s.userLinks[userId], key)
+	s.userLinks[userID] = append(s.userLinks[userID], key)
 	return nil
 }
 
@@ -90,7 +90,7 @@ func (s *fileStorage) Get(ctx context.Context, key string) (value string, ok boo
 	return v, ok
 }
 
-func (s *fileStorage) GetByUserId(ctx context.Context) ([]map[string]string, error) {
+func (s *fileStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	var urls []map[string]string
 
 	userLinks := s.userLinks[getUserIDOrPanic(ctx)]

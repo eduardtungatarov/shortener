@@ -21,9 +21,9 @@ func (s *memoryStorage) Load(ctx context.Context) error {
 }
 
 func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
-	userId := getUserIDOrPanic(ctx)
+	userID := getUserIDOrPanic(ctx)
 	s.m[key] = value
-	s.userLinks[userId] = append(s.userLinks[userId], key)
+	s.userLinks[userID] = append(s.userLinks[userID], key)
 	return nil
 }
 
@@ -42,7 +42,7 @@ func (s *memoryStorage) Get(ctx context.Context, key string) (value string, ok b
 	return v, ok
 }
 
-func (s *memoryStorage) GetByUserId(ctx context.Context) ([]map[string]string, error) {
+func (s *memoryStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	var urls []map[string]string
 
 	userLinks := s.userLinks[getUserIDOrPanic(ctx)]

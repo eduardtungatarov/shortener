@@ -102,7 +102,7 @@ func (s *dbStorage) Get(ctx context.Context, key string) (value string, ok bool)
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	row := s.sqlDB.QueryRowContext(ctx, `SELECT original_url FROM urls WHERE short_url = $1 and user_uuid = $2`, key, getUserIDOrPanic(ctx))
+	row := s.sqlDB.QueryRowContext(ctx, `SELECT original_url FROM urls WHERE short_url = $1`, key)
 
 	var originalURL string
 	err := row.Scan(&originalURL)
@@ -112,7 +112,7 @@ func (s *dbStorage) Get(ctx context.Context, key string) (value string, ok bool)
 	return originalURL, true
 }
 
-func (s *dbStorage) GetByUserId(ctx context.Context) ([]map[string]string, error) {
+func (s *dbStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 

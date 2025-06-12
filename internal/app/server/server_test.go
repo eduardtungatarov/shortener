@@ -49,7 +49,7 @@ func (s *mockStorage) Get(ctx context.Context, key string) (value string, ok boo
 	return v, ok
 }
 
-func (s *mockStorage) GetByUserId(ctx context.Context) ([]map[string]string, error) {
+func (s *mockStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	return make([]map[string]string, 0), nil
 }
 

@@ -31,7 +31,7 @@ type Storage interface {
 	SetBatch(ctx context.Context, keyValues map[string]string) error
 	Get(ctx context.Context, key string) (value string, ok bool)
 	Ping(ctx context.Context) error
-	GetByUserId(ctx context.Context) ([]map[string]string, error)
+	GetByUserID(ctx context.Context) ([]map[string]string, error)
 }
 
 type Handler struct {
@@ -194,7 +194,7 @@ func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request)
 }
 
 func (h *Handler) HandleGetUserUrls(res http.ResponseWriter, req *http.Request) {
-	urls, err := h.storage.GetByUserId(req.Context())
+	urls, err := h.storage.GetByUserID(req.Context())
 	if err != nil {
 		log.Printf("storage GetByUserId: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
@@ -214,6 +214,11 @@ func (h *Handler) HandleGetUserUrls(res http.ResponseWriter, req *http.Request) 
 	}
 
 	_, err = res.Write(resp)
+	if err != nil {
+		log.Printf("response write: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return;
+	}
 }
 
 func (h *Handler) getKeyBatch(batch []ShortURL) map[string]string {

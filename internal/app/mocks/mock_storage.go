@@ -49,19 +49,19 @@ func (mr *MockStorageMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockStorage)(nil).Get), arg0, arg1)
 }
 
-// GetByUserId mocks base method.
-func (m *MockStorage) GetByUserId(arg0 context.Context) ([]map[string]string, error) {
+// GetByUserID mocks base method.
+func (m *MockStorage) GetByUserID(arg0 context.Context) ([]map[string]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByUserId", arg0)
+	ret := m.ctrl.Call(m, "GetByUserID", arg0)
 	ret0, _ := ret[0].([]map[string]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetByUserId indicates an expected call of GetByUserId.
-func (mr *MockStorageMockRecorder) GetByUserId(arg0 interface{}) *gomock.Call {
+// GetByUserID indicates an expected call of GetByUserID.
+func (mr *MockStorageMockRecorder) GetByUserID(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserId", reflect.TypeOf((*MockStorage)(nil).GetByUserId), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByUserID", reflect.TypeOf((*MockStorage)(nil).GetByUserID), arg0)
 }
 
 // Ping mocks base method.

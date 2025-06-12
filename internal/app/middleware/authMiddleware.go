@@ -7,40 +7,40 @@ import (
 	"net/http"
 )
 
-const userIdNameCookie = "userId"
+const userIDNameCookie string = "userId"
 
 func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		var userId string
-		var userIdCrypted string
+		var userID string
+		var userIDCrypted string
 		var setCookie bool
 
-		c, err := req.Cookie(userIdNameCookie)
+		c, err := req.Cookie(userIDNameCookie)
 		if err != nil {
 			if !errors.Is(err, http.ErrNoCookie) {
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			userIdCrypted = generateUserId()
+			userIDCrypted = generateUserID()
 			setCookie = true
 		} else {
-			userIdCrypted = c.Value
+			userIDCrypted = c.Value
 		}
 
-		userId, err = getUserId(userIdCrypted)
+		userID, err = getUserID(userIDCrypted)
 		if err != nil {
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		ctx := req.Context()
-		newCtx := context.WithValue(ctx, userIdNameCookie, userId)
+		newCtx := context.WithValue(ctx, userIDNameCookie, userID)
 		req = req.WithContext(newCtx)
 
 		if setCookie {
 			cookie := &http.Cookie{
-				Name:    userIdNameCookie,
-				Value:   userId,
+				Name:    userIDNameCookie,
+				Value:   userID,
 			}
 			http.SetCookie(res, cookie)
 		}
@@ -49,10 +49,10 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	})
 }
 
-func generateUserId() string {
+func generateUserID() string {
 	return uuid.NewString()
 }
 
-func getUserId(userIdCrypted string) (string, error) {
-	return userIdCrypted, nil
+func getUserID(userIDCrypted string) (string, error) {
+	return userIDCrypted, nil
 }

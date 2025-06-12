@@ -11,7 +11,7 @@ type Storage interface {
 	SetBatch(ctx context.Context, keyValues map[string]string) error
 	Get(ctx context.Context, key string) (value string, ok bool)
 	Ping(ctx context.Context) error
-	GetByUserId(ctx context.Context) ([]map[string]string, error)
+	GetByUserID(ctx context.Context) ([]map[string]string, error)
 	Close() error
 }
 

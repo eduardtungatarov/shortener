@@ -84,6 +84,7 @@ func (m *Middleware) WithGzipReq(next http.Handler) http.Handler {
 func (m *Middleware) WithJSONReqCheck(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
+			m.log.Infoln("Ожидался json тип запроса")
 			res.WriteHeader(http.StatusBadRequest)
 			return;
 		}
