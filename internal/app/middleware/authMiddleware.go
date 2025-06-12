@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"errors"
+	"github.com/eduardtungatarov/shortener/internal/app"
 	"github.com/google/uuid"
 	"net/http"
 )
@@ -13,7 +14,7 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 		var userIDCrypted string
 		var setCookie bool
 
-		c, err := req.Cookie("userId")
+		c, err := req.Cookie(string(app.UserIDKeyName))
 		if err != nil {
 			if !errors.Is(err, http.ErrNoCookie) {
 				res.WriteHeader(http.StatusInternalServerError)
@@ -32,12 +33,12 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 		}
 
 		ctx := req.Context()
-		newCtx := context.WithValue(ctx,"userId", userID)
+		newCtx := context.WithValue(ctx, app.UserIDKeyName, userID)
 		req = req.WithContext(newCtx)
 
 		if setCookie {
 			cookie := &http.Cookie{
-				Name:    "userId",
+				Name:    string(app.UserIDKeyName),
 				Value:   userID,
 			}
 			http.SetCookie(res, cookie)
