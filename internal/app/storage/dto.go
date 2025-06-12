@@ -1,8 +1,8 @@
 package storage
 
 type UserURL struct {
-	ShortURL string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
+	ShortURL string
+	OriginalURL string
 }
 
 func (s *UserURL) GetShortURL() string {

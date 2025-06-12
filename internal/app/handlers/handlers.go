@@ -206,14 +206,27 @@ func (h *Handler) HandleGetUserUrls(res http.ResponseWriter, req *http.Request) 
 		res.WriteHeader(http.StatusNoContent)
 	}
 
-	resp, err := json.Marshal(&urls)
+	type respStr struct {
+		ShortURL string `json:"short_url"`
+		OriginalURL string `json:"original_url"`
+	}
+	var respStrSlice []respStr
+
+	for _, v := range urls {
+		respStrSlice = append(respStrSlice, respStr{
+			OriginalURL: v["original_url"],
+			ShortURL: h.baseURL+"/"+v["short_url"],
+		})
+	}
+
+	body, err := json.Marshal(&respStrSlice)
 	if err != nil {
 		log.Printf("marshal to shortURLBatch: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 		return;
 	}
 
-	_, err = res.Write(resp)
+	_, err = res.Write(body)
 	if err != nil {
 		log.Printf("response write: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
