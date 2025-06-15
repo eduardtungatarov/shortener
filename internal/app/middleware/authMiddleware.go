@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"github.com/eduardtungatarov/shortener/internal/app"
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ import (
 
 var key [32]byte
 
-func Init()  {
+func Init() {
 	key = sha256.Sum256([]byte("fvbrqaq!33"))
 }
 
@@ -62,42 +63,55 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 }
 
 func generateUserID() (string, error) {
-	userId := []byte(uuid.NewString())
-
-	aesblock, err := aes.NewCipher(key[:])
-	if err != nil {
-		return "", err
-	}
-
-	aesgcm, err := cipher.NewGCM(aesblock)
-	if err != nil {
-		return "", err
-	}
-
-	nonce := key[len(key)-aesgcm.NonceSize():]
-
-	encrypted := aesgcm.Seal(nil, nonce, userId, nil)
-
-	return string(encrypted), nil
+	userID := uuid.NewString()
+	return decrypt(userID, key[:])
 }
 
 func getUserID(userIDCrypted string) (string, error) {
-	aesblock, err := aes.NewCipher(key[:])
+	return decrypt(userIDCrypted, key[:])
+}
+
+func encrypt(plainText []byte, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
 
-	aesgcm, err := cipher.NewGCM(aesblock)
+	gcm, err := cipher.NewGCM(block)
 	if err != nil {
 		return "", err
 	}
 
-	nonce := key[len(key)-aesgcm.NonceSize():]
+	nonce := make([]byte, gcm.NonceSize())
 
-	decrypted, err := aesgcm.Open(nil, nonce, []byte(userIDCrypted), nil) // расшифровываем
+	ciphertext := gcm.Seal(nonce, nonce, plainText, nil)
+
+	return hex.EncodeToString(ciphertext), nil
+}
+
+func decrypt(cipherTextHex string, key []byte) (string, error) {
+	ciphertext, err := hex.DecodeString(cipherTextHex)
 	if err != nil {
 		return "", err
 	}
 
-	return string(decrypted), nil
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+
+	plainText, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plainText), nil
 }
