@@ -15,17 +15,30 @@ func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error
 
 func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	r := chi.NewRouter()
-	r.Post(
-		"/",
-		m.WithGzipReq(m.WithLog(h.HandlePost())),
-	)
+	r.Use(m.WithLog)
+
 	r.Get(
 		"/{shortUrl}",
-		m.WithLog(h.HandleGet()),
+		h.HandleGet,
 	)
-	r.Post(
-		"/api/shorten",
-		m.WithGzipReq(m.WithGzipResp(m.WithLog(h.HandleShorten()))),
+
+	r.Get(
+		"/ping",
+		h.HandleGetPing,
 	)
+
+	gzipReqG := r.Group(func(r chi.Router) {
+		r.Use(m.WithGzipReq)
+	})
+	gzipReqG.Post(
+		"/",
+		h.HandlePost,
+	)
+	gzipReqG.Group(func(r chi.Router) {
+		r.Use(m.WithGzipResp, m.WithJSONReqCheck)
+		r.Post("/api/shorten", h.HandleShorten)
+		r.Post("/api/shorten/batch", h.HandleShortenBatch)
+	})
+
 	return r
 }

@@ -17,8 +17,8 @@ func MakeMiddleware(log *zap.SugaredLogger) *Middleware {
 	}
 }
 
-func (m *Middleware) WithLog(handler http.HandlerFunc) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
+func (m *Middleware) WithLog(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		start := time.Now()
 
 		uri := req.RequestURI
@@ -33,7 +33,7 @@ func (m *Middleware) WithLog(handler http.HandlerFunc) http.HandlerFunc {
 			responseData: responseData,
 		}
 
-		handler.ServeHTTP(lres, req)
+		next.ServeHTTP(lres, req)
 
 		duration := time.Since(start)
 
@@ -44,11 +44,11 @@ func (m *Middleware) WithLog(handler http.HandlerFunc) http.HandlerFunc {
 			"status", responseData.status,
 			"size", responseData.size,
 		)
-	}
+	})
 }
 
-func (m *Middleware) WithGzipResp(handler http.HandlerFunc) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
+func (m *Middleware) WithGzipResp(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		oRes := res
 
 		if strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
@@ -59,12 +59,12 @@ func (m *Middleware) WithGzipResp(handler http.HandlerFunc) http.HandlerFunc {
 			oRes = gRes
 		}
 
-		handler.ServeHTTP(oRes, req)
-	}
+		next.ServeHTTP(oRes, req)
+	})
 }
 
-func (m *Middleware) WithGzipReq(handler http.HandlerFunc) http.HandlerFunc {
-	return func(res http.ResponseWriter, req *http.Request) {
+func (m *Middleware) WithGzipReq(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if strings.Contains(req.Header.Get("Content-Encoding"), "gzip") {
 			gzipR, err := NewGzipReader(req.Body)
 			if err != nil {
@@ -76,7 +76,19 @@ func (m *Middleware) WithGzipReq(handler http.HandlerFunc) http.HandlerFunc {
 			req.Body = gzipR
 		}
 
-		handler.ServeHTTP(res, req)
-	}
+		next.ServeHTTP(res, req)
+	})
+}
+
+
+func (m *Middleware) WithJSONReqCheck(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
+			res.WriteHeader(http.StatusBadRequest)
+			return;
+		}
+
+		next.ServeHTTP(res, req)
+	})
 }
 

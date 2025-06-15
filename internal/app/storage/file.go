@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"os"
@@ -12,20 +13,20 @@ type storageString struct {
 	OriginalURL string `json:"original_url"`
 }
 
-type storage struct {
+type fileStorage struct {
 	m map[string]string
 	file *os.File
 	encoder *json.Encoder
 	decoder *json.Decoder
 }
 
-func MakeStorage(filename string) (*storage, error) {
+func MakeFileStorage(filename string) (*fileStorage, error) {
 	file, err := os.OpenFile(filename, os.O_CREATE | os.O_RDWR |os.O_APPEND, 0666)
 	if err != nil {
 		return nil, err
 	}
 
-	return &storage{
+	return &fileStorage{
 		m: make(map[string]string),
 		file: file,
 		encoder: json.NewEncoder(file),
@@ -33,7 +34,7 @@ func MakeStorage(filename string) (*storage, error) {
 	}, nil
 }
 
-func (s *storage) Load() error {
+func (s *fileStorage) Load(ctx context.Context) error {
 	v := storageString{}
 
 	for  {
@@ -51,7 +52,7 @@ func (s *storage) Load() error {
 	return nil
 }
 
-func (s *storage) Set(key, value string) error {
+func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 	v := storageString{
 		UUID: uuid.New().String(),
 		ShortURL: key,
@@ -66,7 +67,25 @@ func (s *storage) Set(key, value string) error {
 	return nil
 }
 
-func (s *storage) Get(key string) (value string, ok bool) {
+func (s *fileStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
+	for key, originalURL := range keyValues {
+		err := s.Set(ctx, key, originalURL)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *fileStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
+}
+
+func (s *fileStorage) Ping(ctx context.Context) error {
+	return nil
+}
+
+func (s *fileStorage) Close() error {
+	return nil
 }

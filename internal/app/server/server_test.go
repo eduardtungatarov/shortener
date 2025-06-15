@@ -3,9 +3,13 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
+	"errors"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/logger"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
+	"github.com/eduardtungatarov/shortener/internal/app/mocks"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -25,14 +29,28 @@ func makeMockStorage() *mockStorage{
 	}
 }
 
-func (s *mockStorage) Set(key, value string) error {
+func (s *mockStorage) Set(ctx context.Context, key, value string) error {
 	s.m[key] = value
 	return nil
 }
 
-func (s *mockStorage) Get(key string) (value string, ok bool) {
+func (s *mockStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
+	for key, originalURL := range keyValues {
+		err := s.Set(ctx, key, originalURL)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *mockStorage) Get(ctx context.Context, key string) (value string, ok bool) {
 	v, ok := s.m[key]
 	return v, ok
+}
+
+func (s *mockStorage) Ping(ctx context.Context) error {
+	return nil
 }
 
 func TestServer(t *testing.T) {
@@ -92,7 +110,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(),"0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "GET",
@@ -141,7 +159,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(),"0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "GET",
@@ -160,7 +178,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "GET",
@@ -179,7 +197,7 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set("0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
 				httpMethod: "PATCH",
@@ -301,6 +319,95 @@ func TestServer(t *testing.T) {
 				response: ``,
 			},
 		},
+		{
+			name: "get_ping_success",
+			input: input{
+				preloadedStorage: func() handlers.Storage {
+					ctrl := gomock.NewController(t)
+					m := mocks.NewMockStorage(ctrl)
+					m.EXPECT().Ping(gomock.Any()).Return(nil)
+					return m
+				}(),
+				httpMethod: "GET",
+				requestURI: "/ping",
+				contentType: "",
+				body: "",
+			},
+			output: output{
+				statusCode: 200,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "get_ping_error",
+			input: input{
+				preloadedStorage: func() handlers.Storage {
+					ctrl := gomock.NewController(t)
+					m := mocks.NewMockStorage(ctrl)
+					m.EXPECT().Ping(gomock.Any()).Return(errors.New("ping failed"))
+					return m
+				}(),
+				httpMethod: "GET",
+				requestURI: "/ping",
+				contentType: "",
+				body: "",
+			},
+			output: output{
+				statusCode: 500,
+				contentTypeHeaderValue: "",
+				response: ``,
+			},
+		},
+		{
+			name: "success_post_batch",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten/batch",
+				contentType: "application/json",
+				body: `
+				[
+				  {
+					"correlation_id": "1",
+					"original_url": "https://ya.ru"
+				  },
+				  {
+					"correlation_id": "2",
+					"original_url": "https://r0.ru"
+				  }
+				]
+				`,
+			},
+			output: output{
+				statusCode: 201,
+				contentTypeHeaderValue: "application/json",
+				response: `[{"correlation_id":"1"`,
+			},
+		},
+		{
+			name: "success_post_batch_with_content_encoding",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod: "POST",
+				requestURI: "/api/shorten/batch",
+				contentType: "application/json",
+				contentEncoding: "gzip",
+				body: `
+				[
+				  {
+					"correlation_id": "1",
+					"original_url": "https://ya.ru"
+				  }
+				]
+				`,
+			},
+			output: output{
+				statusCode: 201,
+				locationHeaderValue: "",
+				response: "http://localhost:8080/",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -314,8 +421,10 @@ func TestServer(t *testing.T) {
 
 			m := middleware.MakeMiddleware(log)
 			h := handlers.MakeHandler(
+				context.Background(),
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
+				log,
 			)
 
 			r := getRouter(h, m)
@@ -369,7 +478,7 @@ func TestServer(t *testing.T) {
 				respBody, err := io.ReadAll(body)
 				require.NoError(t, err)
 
-				assert.Contains(t, string(respBody), tt.output.response, "Ссылка в ответе должна начинаться с %v, получено = %v", tt.output.response, string(respBody))
+				assert.Contains(t, string(respBody), tt.output.response, "Ответ должен содержать %v, получено = %v", tt.output.response, string(respBody))
 			}
 		})
 	}
