@@ -5,7 +5,7 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app"
 )
 
-func getUserIDOrPanic(ctx context.Context) string  {
+func getUserIDOrPanic(ctx context.Context) string {
 	if userID, ok := ctx.Value(app.UserIDKeyName).(string); ok {
 		return userID
 	}

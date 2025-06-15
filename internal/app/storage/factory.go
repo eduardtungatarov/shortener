@@ -15,7 +15,7 @@ type Storage interface {
 	Close() error
 }
 
-func MakeStorage(cfg config.Config) (Storage, error)  {
+func MakeStorage(cfg config.Config) (Storage, error) {
 	if cfg.Database.DSN != config.DefaultDatabaseDSN {
 		return MakeDBStorage(cfg.Database)
 	}

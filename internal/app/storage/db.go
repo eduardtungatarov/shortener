@@ -14,34 +14,35 @@ import (
 var ErrConflict = errors.New("data conflict")
 
 type dbStorage struct {
-	sqlDB *sql.DB
+	sqlDB   *sql.DB
 	timeout time.Duration
 }
 
-func MakeDBStorage(cfg config.Database) (*dbStorage, error)  {
-	SQLDB, err := sql.Open("pgx", cfg.DSN)
+func MakeDBStorage(cfg config.Database) (*dbStorage, error) {
+	sqlDB, err := sql.Open("pgx", cfg.DSN)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dbStorage{
-		sqlDB: SQLDB,
+		sqlDB:   sqlDB,
 		timeout: cfg.Timeout,
 	}, nil
 }
 
 func (s *dbStorage) Load(ctx context.Context) error {
-	_, err := s.sqlDB.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS urls (
-        uuid UUID PRIMARY KEY,
-        short_url VARCHAR(255) NOT NULL UNIQUE,
-        original_url TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_short_url ON urls (short_url);`)
-	if err != nil {
-		return err
-	}
+	createTableSQL := `
+        CREATE TABLE IF NOT EXISTS urls (
+            uuid UUID PRIMARY KEY,
+            short_url VARCHAR(255) NOT NULL UNIQUE,
+            original_url TEXT NOT NULL
+        );
+    `
+	createShortURLIndexSQL := `
+        CREATE INDEX IF NOT EXISTS idx_short_url ON urls (short_url);
+    `
 
-	query := `
+	addUserUUIDColumn := `
     DO $$
     BEGIN
         IF NOT EXISTS (
@@ -54,13 +55,26 @@ func (s *dbStorage) Load(ctx context.Context) error {
         END IF;
     END $$;`
 
-	_, err = s.sqlDB.ExecContext(ctx, query)
+	createUserUUIDIndex := `
+		CREATE INDEX IF NOT EXISTS idx_user_uuid ON urls (user_uuid);
+	`
+
+	_, err := s.sqlDB.ExecContext(ctx, createTableSQL)
 	if err != nil {
 		return err
 	}
 
-	_, err = s.sqlDB.ExecContext(ctx, `
-    CREATE INDEX IF NOT EXISTS idx_user_uuid ON urls (user_uuid);`)
+	_, err = s.sqlDB.ExecContext(ctx, createShortURLIndexSQL)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.sqlDB.ExecContext(ctx, addUserUUIDColumn)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.sqlDB.ExecContext(ctx, createUserUUIDIndex)
 	if err != nil {
 		return err
 	}
@@ -137,7 +151,7 @@ func (s *dbStorage) GetByUserID(ctx context.Context) ([]map[string]string, error
 		}
 
 		urls = append(urls, map[string]string{
-			"short_url": v.ShortURL,
+			"short_url":    v.ShortURL,
 			"original_url": v.OriginalURL,
 		})
 	}

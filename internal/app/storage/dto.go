@@ -1,7 +1,7 @@
 package storage
 
 type UserURL struct {
-	ShortURL string
+	ShortURL    string
 	OriginalURL string
 }
 

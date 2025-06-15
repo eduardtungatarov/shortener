@@ -24,13 +24,13 @@ func (m *Middleware) WithLog(next http.Handler) http.Handler {
 		uri := req.RequestURI
 		method := req.Method
 
-		responseData := &responseData {
+		responseData := &responseData{
 			status: 0,
-			size: 0,
+			size:   0,
 		}
 		lres := &logResponseWriter{
 			ResponseWriter: res,
-			responseData: responseData,
+			responseData:   responseData,
 		}
 
 		next.ServeHTTP(lres, req)
@@ -80,13 +80,12 @@ func (m *Middleware) WithGzipReq(next http.Handler) http.Handler {
 	})
 }
 
-
 func (m *Middleware) WithJSONReqCheck(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {
 			m.log.Infoln("Ожидался json тип запроса")
 			res.WriteHeader(http.StatusBadRequest)
-			return;
+			return
 		}
 
 		next.ServeHTTP(res, req)

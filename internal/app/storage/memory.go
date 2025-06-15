@@ -5,13 +5,13 @@ import (
 )
 
 type memoryStorage struct {
-	m map[string]string
+	m         map[string]string
 	userLinks map[string][]string
 }
 
 func MakeMemoryStorage() *memoryStorage {
 	return &memoryStorage{
-		m: make(map[string]string),
+		m:         make(map[string]string),
 		userLinks: make(map[string][]string),
 	}
 }
@@ -49,7 +49,7 @@ func (s *memoryStorage) GetByUserID(ctx context.Context) ([]map[string]string, e
 
 	for _, v := range userLinks {
 		urls = append(urls, map[string]string{
-			"short_url": v,
+			"short_url":    v,
 			"original_url": s.m[v],
 		})
 	}

@@ -33,3 +33,6 @@ test14:
 
 gotest:
 	go test -v ./...
+
+fmt:
+	go fmt ./...

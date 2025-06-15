@@ -20,13 +20,13 @@ import (
 )
 
 type mockStorage struct {
-	m map[string]string
+	m         map[string]string
 	userLinks map[string][]string
 }
 
-func makeMockStorage() *mockStorage{
+func makeMockStorage() *mockStorage {
 	return &mockStorage{
-		m: make(map[string]string),
+		m:         make(map[string]string),
 		userLinks: make(map[string][]string),
 	}
 }
@@ -62,53 +62,53 @@ func (s *mockStorage) Ping(ctx context.Context) error {
 func TestServer(t *testing.T) {
 	type input struct {
 		preloadedStorage handlers.Storage
-		httpMethod string
-		requestURI string
-		contentType string
-		acceptEncoding string
-		contentEncoding string
-		body string
+		httpMethod       string
+		requestURI       string
+		contentType      string
+		acceptEncoding   string
+		contentEncoding  string
+		body             string
 	}
 	type output struct {
-		statusCode int
-		locationHeaderValue string
+		statusCode             int
+		locationHeaderValue    string
 		contentTypeHeaderValue string
-		response string
+		response               string
 	}
 	tests := []struct {
 		name   string
-		input input
+		input  input
 		output output
 	}{
 		{
 			name: "success_post",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/",
-				contentType: "text/plain",
-				body: "https://practicum.yandex.ru/",
+				httpMethod:       "POST",
+				requestURI:       "/",
+				contentType:      "text/plain",
+				body:             "https://practicum.yandex.ru/",
 			},
 			output: output{
-				statusCode: 201,
+				statusCode:          201,
 				locationHeaderValue: "",
-				response: "http://localhost:8080/",
+				response:            "http://localhost:8080/",
 			},
 		},
 		{
 			name: "success_post_with_gzip",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/",
-				contentType: "text/plain",
-				contentEncoding: "gzip",
-				body: "https://practicum.yandex.ru/",
+				httpMethod:       "POST",
+				requestURI:       "/",
+				contentType:      "text/plain",
+				contentEncoding:  "gzip",
+				body:             "https://practicum.yandex.ru/",
 			},
 			output: output{
-				statusCode: 201,
+				statusCode:          201,
 				locationHeaderValue: "",
-				response: "http://localhost:8080/",
+				response:            "http://localhost:8080/",
 			},
 		},
 		{
@@ -116,48 +116,48 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set(context.Background(),"0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
-				httpMethod: "GET",
-				requestURI: "/0dd1981",
+				httpMethod:  "GET",
+				requestURI:  "/0dd1981",
 				contentType: "",
-				body: "",
+				body:        "",
 			},
 			output: output{
-				statusCode: 307,
+				statusCode:          307,
 				locationHeaderValue: "https://practicum.yandex.ru/",
-				response: "",
+				response:            "",
 			},
 		},
 		{
 			name: "post_with_empty_body",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/",
-				contentType: "text/plain",
-				body: "",
+				httpMethod:       "POST",
+				requestURI:       "/",
+				contentType:      "text/plain",
+				body:             "",
 			},
 			output: output{
-				statusCode: 400,
+				statusCode:          400,
 				locationHeaderValue: "",
-				response: "",
+				response:            "",
 			},
 		},
 		{
 			name: "post_with_incorrect_path",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/bla",
-				contentType: "text/plain",
-				body: "https://practicum.yandex.ru/",
+				httpMethod:       "POST",
+				requestURI:       "/bla",
+				contentType:      "text/plain",
+				body:             "https://practicum.yandex.ru/",
 			},
 			output: output{
-				statusCode: 405,
+				statusCode:          405,
 				locationHeaderValue: "",
-				response: "",
+				response:            "",
 			},
 		},
 		{
@@ -165,18 +165,18 @@ func TestServer(t *testing.T) {
 			input: input{
 				preloadedStorage: func() handlers.Storage {
 					s := makeMockStorage()
-					s.Set(context.Background(),"0dd1981", "https://practicum.yandex.ru/")
+					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
-				httpMethod: "GET",
-				requestURI: "/",
+				httpMethod:  "GET",
+				requestURI:  "/",
 				contentType: "",
-				body: "",
+				body:        "",
 			},
 			output: output{
-				statusCode: 405,
+				statusCode:          405,
 				locationHeaderValue: "",
-				response: "",
+				response:            "",
 			},
 		},
 		{
@@ -187,15 +187,15 @@ func TestServer(t *testing.T) {
 					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
-				httpMethod: "GET",
-				requestURI: "/blabla",
+				httpMethod:  "GET",
+				requestURI:  "/blabla",
 				contentType: "",
-				body: "",
+				body:        "",
 			},
 			output: output{
-				statusCode: 400,
+				statusCode:          400,
 				locationHeaderValue: "",
-				response: "",
+				response:            "",
 			},
 		},
 		{
@@ -206,123 +206,123 @@ func TestServer(t *testing.T) {
 					s.Set(context.Background(), "0dd1981", "https://practicum.yandex.ru/")
 					return s
 				}(),
-				httpMethod: "PATCH",
-				requestURI: "/",
+				httpMethod:  "PATCH",
+				requestURI:  "/",
 				contentType: "",
-				body: "",
+				body:        "",
 			},
 			output: output{
-				statusCode: 405,
+				statusCode:          405,
 				locationHeaderValue: "",
-				response: "",
+				response:            "",
 			},
 		},
 		{
 			name: "success_post_api_shorten",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten",
-				contentType: "application/json",
-				body: `{"url":"https://practicum.yandex.ru"}`,
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten",
+				contentType:      "application/json",
+				body:             `{"url":"https://practicum.yandex.ru"}`,
 			},
 			output: output{
-				statusCode: 201,
+				statusCode:             201,
 				contentTypeHeaderValue: "application/json",
-				response: `{"result":"http://localhost:8080/`,
+				response:               `{"result":"http://localhost:8080/`,
 			},
 		},
 		{
 			name: "success_post_api_shorten_with_accept_encoding",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten",
-				contentType: "application/json",
-				acceptEncoding: "gzip",
-				body: `{"url":"https://practicum.yandex.ru"}`,
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten",
+				contentType:      "application/json",
+				acceptEncoding:   "gzip",
+				body:             `{"url":"https://practicum.yandex.ru"}`,
 			},
 			output: output{
-				statusCode: 201,
+				statusCode:             201,
 				contentTypeHeaderValue: "application/json",
-				response: `{"result":"http://localhost:8080/`,
+				response:               `{"result":"http://localhost:8080/`,
 			},
 		},
 		{
 			name: "success_post_api_shorten_with_content_encoding",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten",
-				contentType: "application/json",
-				contentEncoding: "gzip",
-				acceptEncoding: "gzip",
-				body: `{"url":"https://practicum.yandex.ru"}`,
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten",
+				contentType:      "application/json",
+				contentEncoding:  "gzip",
+				acceptEncoding:   "gzip",
+				body:             `{"url":"https://practicum.yandex.ru"}`,
 			},
 			output: output{
-				statusCode: 201,
+				statusCode:             201,
 				contentTypeHeaderValue: "application/json",
-				response: `{"result":"http://localhost:8080/`,
+				response:               `{"result":"http://localhost:8080/`,
 			},
 		},
 		{
 			name: "post_api_shorten_without_application_json_header",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten",
-				contentType: "",
-				body: `{"url":"https://practicum.yandex.ru"}`,
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten",
+				contentType:      "",
+				body:             `{"url":"https://practicum.yandex.ru"}`,
 			},
 			output: output{
-				statusCode: 400,
+				statusCode:             400,
 				contentTypeHeaderValue: "",
-				response: ``,
+				response:               ``,
 			},
 		},
 		{
 			name: "post_api_shorten_another_method",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "GET",
-				requestURI: "/api/shorten",
-				contentType: "application/json",
-				body: `{"url":"https://practicum.yandex.ru"}`,
+				httpMethod:       "GET",
+				requestURI:       "/api/shorten",
+				contentType:      "application/json",
+				body:             `{"url":"https://practicum.yandex.ru"}`,
 			},
 			output: output{
-				statusCode: 405,
+				statusCode:             405,
 				contentTypeHeaderValue: "",
-				response: ``,
+				response:               ``,
 			},
 		},
 		{
 			name: "post_api_shorten_not_json_body",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten",
-				contentType: "application/json",
-				body: ``,
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten",
+				contentType:      "application/json",
+				body:             ``,
 			},
 			output: output{
-				statusCode: 500,
+				statusCode:             500,
 				contentTypeHeaderValue: "",
-				response: ``,
+				response:               ``,
 			},
 		},
 		{
 			name: "post_api_shorten_body_without_json_url",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten",
-				contentType: "application/json",
-				body: `{"test": "bla"}`,
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten",
+				contentType:      "application/json",
+				body:             `{"test": "bla"}`,
 			},
 			output: output{
-				statusCode: 400,
+				statusCode:             400,
 				contentTypeHeaderValue: "",
-				response: ``,
+				response:               ``,
 			},
 		},
 		{
@@ -334,15 +334,15 @@ func TestServer(t *testing.T) {
 					m.EXPECT().Ping(gomock.Any()).Return(nil)
 					return m
 				}(),
-				httpMethod: "GET",
-				requestURI: "/ping",
+				httpMethod:  "GET",
+				requestURI:  "/ping",
 				contentType: "",
-				body: "",
+				body:        "",
 			},
 			output: output{
-				statusCode: 200,
+				statusCode:             200,
 				contentTypeHeaderValue: "",
-				response: ``,
+				response:               ``,
 			},
 		},
 		{
@@ -354,24 +354,24 @@ func TestServer(t *testing.T) {
 					m.EXPECT().Ping(gomock.Any()).Return(errors.New("ping failed"))
 					return m
 				}(),
-				httpMethod: "GET",
-				requestURI: "/ping",
+				httpMethod:  "GET",
+				requestURI:  "/ping",
 				contentType: "",
-				body: "",
+				body:        "",
 			},
 			output: output{
-				statusCode: 500,
+				statusCode:             503,
 				contentTypeHeaderValue: "",
-				response: ``,
+				response:               ``,
 			},
 		},
 		{
 			name: "success_post_batch",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten/batch",
-				contentType: "application/json",
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten/batch",
+				contentType:      "application/json",
 				body: `
 				[
 				  {
@@ -386,19 +386,19 @@ func TestServer(t *testing.T) {
 				`,
 			},
 			output: output{
-				statusCode: 201,
+				statusCode:             201,
 				contentTypeHeaderValue: "application/json",
-				response: `[{"correlation_id":"1"`,
+				response:               `[{"correlation_id":"1"`,
 			},
 		},
 		{
 			name: "success_post_batch_with_content_encoding",
 			input: input{
 				preloadedStorage: makeMockStorage(),
-				httpMethod: "POST",
-				requestURI: "/api/shorten/batch",
-				contentType: "application/json",
-				contentEncoding: "gzip",
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten/batch",
+				contentType:      "application/json",
+				contentEncoding:  "gzip",
 				body: `
 				[
 				  {
@@ -409,9 +409,22 @@ func TestServer(t *testing.T) {
 				`,
 			},
 			output: output{
-				statusCode: 201,
+				statusCode:          201,
 				locationHeaderValue: "",
-				response: "http://localhost:8080/",
+				response:            "http://localhost:8080/",
+			},
+		},
+		{
+			name: "fail_post_batch_empty_body",
+			input: input{
+				preloadedStorage: makeMockStorage(),
+				httpMethod:       "POST",
+				requestURI:       "/api/shorten/batch",
+				contentType:      "application/json",
+				body:             ``,
+			},
+			output: output{
+				statusCode: 500,
 			},
 		},
 		{
@@ -421,7 +434,7 @@ func TestServer(t *testing.T) {
 					ret := []map[string]string{
 						{
 							"original_url": "http://ya.ru",
-							"short_url": "e520966",
+							"short_url":    "e520966",
 						},
 					}
 					ctrl := gomock.NewController(t)
@@ -434,7 +447,7 @@ func TestServer(t *testing.T) {
 			},
 			output: output{
 				statusCode: 200,
-				response: `[{"original_url":"http://ya.ru","short_url":"e520966"}]`,
+				response:   `[{"original_url":"http://ya.ru","short_url":"e520966"}]`,
 			},
 		},
 		{

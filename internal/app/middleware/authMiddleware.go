@@ -38,8 +38,8 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 
 		if setCookie {
 			cookie := &http.Cookie{
-				Name:    string(app.UserIDKeyName),
-				Value:   userID,
+				Name:  string(app.UserIDKeyName),
+				Value: userID,
 			}
 			http.SetCookie(res, cookie)
 		}
