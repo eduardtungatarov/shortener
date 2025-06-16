@@ -2,26 +2,18 @@ package middleware
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/eduardtungatarov/shortener/internal/app"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"net/http"
 )
 
-var key [32]byte
-
-func Init() {
-	key = sha256.Sum256([]byte("fvbrqaq!33"))
-}
-
 func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		var userID string
-		var userIDCrypted string
+		var token string
 		var setCookie bool
 
 		c, err := req.Cookie(string(app.UserIDKeyName))
@@ -30,18 +22,18 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			userIDCrypted, err = generateUserID()
+			token, err = buildJWTString()
 			if err != nil {
 				res.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 			setCookie = true
 		} else {
-			userIDCrypted = c.Value
+			token = c.Value
 		}
 
-		userID, err = getUserID(userIDCrypted)
-		if err != nil {
+		userID = getUserID(token)
+		if userID == "" {
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}
@@ -53,7 +45,7 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 		if setCookie {
 			cookie := &http.Cookie{
 				Name:  string(app.UserIDKeyName),
-				Value: userID,
+				Value: token,
 			}
 			http.SetCookie(res, cookie)
 		}
@@ -62,56 +54,43 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	})
 }
 
-func generateUserID() (string, error) {
-	userID := uuid.NewString()
-	return decrypt(userID, key[:])
+type Claims struct {
+	jwt.RegisteredClaims
+	UserID string
 }
 
-func getUserID(userIDCrypted string) (string, error) {
-	return decrypt(userIDCrypted, key[:])
+const secretKey = "supersecretkey"
+
+func buildJWTString() (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims {
+		RegisteredClaims: jwt.RegisteredClaims{},
+		UserID: uuid.NewString(),
+	})
+
+	tokenString, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
 }
 
-func encrypt(plainText []byte, key []byte) (string, error) {
-	block, err := aes.NewCipher(key)
+func getUserID(tokenString string) string {
+	claims := &Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims,
+		func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+			}
+			return []byte(secretKey), nil
+		})
 	if err != nil {
-		return "", err
+		return ""
 	}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
+	if !token.Valid {
+		return ""
 	}
 
-	nonce := make([]byte, gcm.NonceSize())
-
-	ciphertext := gcm.Seal(nonce, nonce, plainText, nil)
-
-	return hex.EncodeToString(ciphertext), nil
-}
-
-func decrypt(cipherTextHex string, key []byte) (string, error) {
-	ciphertext, err := hex.DecodeString(cipherTextHex)
-	if err != nil {
-		return "", err
-	}
-
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-
-	nonceSize := gcm.NonceSize()
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-
-	plainText, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		return "", err
-	}
-
-	return string(plainText), nil
+	return claims.UserID
 }
