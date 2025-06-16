@@ -14,16 +14,16 @@ import (
 	"net/http"
 )
 
-type OriginalURL struct{
+type OriginalURL struct {
 	CorrelationID string `json:"correlation_id"`
-	OriginalURL string `json:"original_url"`
+	OriginalURL   string `json:"original_url"`
 }
 
-type ShortURL struct{
+type ShortURL struct {
 	CorrelationID string `json:"correlation_id"`
-	ShortURL string `json:"short_url"`
-	Key string `json:"-"`
-	OriginalURL string `json:"-"`
+	ShortURL      string `json:"short_url"`
+	Key           string `json:"-"`
+	OriginalURL   string `json:"-"`
 }
 
 type Storage interface {
@@ -31,45 +31,44 @@ type Storage interface {
 	SetBatch(ctx context.Context, keyValues map[string]string) error
 	Get(ctx context.Context, key string) (value string, ok bool)
 	Ping(ctx context.Context) error
+	GetByUserID(ctx context.Context) ([]map[string]string, error)
 }
 
 type Handler struct {
-	ctx context.Context
 	storage Storage
 	baseURL string
-	log *zap.SugaredLogger
+	log     *zap.SugaredLogger
 }
 
-func MakeHandler(ctx context.Context, storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
+func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
 	return &Handler{
-		ctx: ctx,
 		storage: storage,
 		baseURL: baseURL,
-		log: log,
+		log:     log,
 	}
 }
 
-func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
+func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Не удалось прочитать тело запроса: %v", err)
-		return;
+		return
 	}
 	defer req.Body.Close()
 
 	if len(body) == 0 {
 		res.WriteHeader(http.StatusBadRequest)
-		return;
+		return
 	}
 
 	key := h.getKey(body)
-	err = h.storage.Set(h.ctx, key, string(body))
+	err = h.storage.Set(req.Context(), key, string(body))
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Не удалось сохранить url: %v", err)
-		return;
+		return
 	}
 
 	if isConflict {
@@ -78,21 +77,21 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request)  {
 		res.WriteHeader(http.StatusCreated)
 	}
 
-	_, err = res.Write([]byte(h.baseURL+"/"+key))
+	_, err = res.Write([]byte(h.baseURL + "/" + key))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Ошибка при записи ответа: %v", err)
-		return;
+		return
 	}
 }
 
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "shortUrl")
 
-	url, ok := h.storage.Get(h.ctx, shortURL)
+	url, ok := h.storage.Get(req.Context(), shortURL)
 	if !ok {
 		res.WriteHeader(http.StatusBadRequest)
-		return;
+		return
 	}
 
 	res.Header().Add(`Location`, url)
@@ -108,28 +107,28 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&reqStr); err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
-		return;
+		return
 	}
 
 	if reqStr.URL == "" {
 		res.WriteHeader(http.StatusBadRequest)
-		return;
+		return
 	}
 
 	// Сохраняем url.
 	key := h.getKey([]byte(reqStr.URL))
-	err := h.storage.Set(h.ctx, key, reqStr.URL)
+	err := h.storage.Set(req.Context(), key, reqStr.URL)
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
-		return;
+		return
 	}
 
 	// Формируем ответ.
 	respStr := struct {
 		Result string `json:"result"`
 	}{}
-	respStr.Result = h.baseURL+"/"+key
+	respStr.Result = h.baseURL + "/" + key
 
 	res.Header().Set("Content-Type", "application/json")
 
@@ -142,14 +141,14 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	enc := json.NewEncoder(res)
 	if err := enc.Encode(respStr); err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
-		return;
+		return
 	}
 }
 
 func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
-	err := h.storage.Ping(h.ctx)
+	err := h.storage.Ping(req.Context())
 	if err != nil {
-		res.WriteHeader(http.StatusInternalServerError)
+		res.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
@@ -164,24 +163,24 @@ func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request)
 	if err := dec.Decode(&batch); err != nil {
 		log.Printf("decode batch: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
-		return;
+		return
 	}
 
 	shortURLBatch := h.getShortURLBatch(batch)
 	keyValueBatch := h.getKeyBatch(shortURLBatch)
 
-	err := h.storage.SetBatch(h.ctx, keyValueBatch)
+	err := h.storage.SetBatch(req.Context(), keyValueBatch)
 	if err != nil {
 		log.Printf("storage SetBatch: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
-		return;
+		return
 	}
 
 	resp, err := json.Marshal(&shortURLBatch)
 	if err != nil {
 		log.Printf("marshal to shortURLBatch: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
-		return;
+		return
 	}
 
 	res.Header().Set("Content-Type", "application/json")
@@ -190,7 +189,48 @@ func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request)
 	if err != nil {
 		log.Printf("response write: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
-		return;
+		return
+	}
+}
+
+func (h *Handler) HandleGetUserUrls(res http.ResponseWriter, req *http.Request) {
+	urls, err := h.storage.GetByUserID(req.Context())
+	if err != nil {
+		log.Printf("storage GetByUserId: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	if len(urls) == 0 {
+		res.WriteHeader(http.StatusNoContent)
+	}
+
+	type respStr struct {
+		ShortURL    string `json:"short_url"`
+		OriginalURL string `json:"original_url"`
+	}
+	var respStrSlice []respStr
+
+	for _, v := range urls {
+		respStrSlice = append(respStrSlice, respStr{
+			OriginalURL: v["original_url"],
+			ShortURL:    h.baseURL + "/" + v["short_url"],
+		})
+	}
+
+	body, err := json.Marshal(&respStrSlice)
+	if err != nil {
+		log.Printf("marshal to shortURLBatch: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	_, err = res.Write(body)
+	if err != nil {
+		log.Printf("response write: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -209,9 +249,9 @@ func (h *Handler) getShortURLBatch(batch []OriginalURL) []ShortURL {
 		key := h.getKey([]byte(b.OriginalURL))
 		res = append(res, ShortURL{
 			CorrelationID: b.CorrelationID,
-			ShortURL: h.baseURL+"/"+key,
-			Key: key,
-			OriginalURL: b.OriginalURL,
+			ShortURL:      h.baseURL + "/" + key,
+			Key:           key,
+			OriginalURL:   b.OriginalURL,
 		})
 	}
 

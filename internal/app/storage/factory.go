@@ -11,10 +11,11 @@ type Storage interface {
 	SetBatch(ctx context.Context, keyValues map[string]string) error
 	Get(ctx context.Context, key string) (value string, ok bool)
 	Ping(ctx context.Context) error
+	GetByUserID(ctx context.Context) ([]map[string]string, error)
 	Close() error
 }
 
-func MakeStorage(cfg config.Config) (Storage, error)  {
+func MakeStorage(cfg config.Config) (Storage, error) {
 	if cfg.Database.DSN != config.DefaultDatabaseDSN {
 		return MakeDBStorage(cfg.Database)
 	}
