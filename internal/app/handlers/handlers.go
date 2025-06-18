@@ -239,6 +239,23 @@ func (h *Handler) HandleGetUserUrls(res http.ResponseWriter, req *http.Request) 
 	}
 }
 
+func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Request) {
+	defer req.Body.Close()
+
+	respStr := []string{}
+	decoder := json.NewDecoder(req.Body)
+	err := decoder.Decode(&respStr)
+	if err != nil {
+		log.Printf("unmarshal body: %v", err)
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	//
+
+	res.WriteHeader(http.StatusAccepted)
+}
+
 func (h *Handler) getKeyBatch(batch []ShortURL) map[string]string {
 	res := map[string]string{}
 	for _, b := range batch {

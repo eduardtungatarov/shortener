@@ -43,6 +43,10 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 		r.Use(m.WithGzipResp, m.WithJSONReqCheck)
 		r.Post("/api/shorten", h.HandleShorten)
 		r.Post("/api/shorten/batch", h.HandleShortenBatch)
+		r.Delete(
+			"/api/user/urls",
+			h.HandleDeleteUserUrls,
+		)
 	})
 
 	return r
