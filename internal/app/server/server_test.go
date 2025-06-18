@@ -46,13 +46,20 @@ func (s *mockStorage) SetBatch(ctx context.Context, keyValues map[string]string)
 	return nil
 }
 
-func (s *mockStorage) Get(ctx context.Context, key string) (value string, ok bool) {
+func (s *mockStorage) Get(ctx context.Context, key string) (string, error) {
 	v, ok := s.m[key]
-	return v, ok
+	if !ok {
+		return "", errors.New("not found")
+	}
+	return v, nil
 }
 
 func (s *mockStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	return make([]map[string]string, 0), nil
+}
+
+func (s *mockStorage) DeleteBatch(ctx context.Context, keys []string, userID string) error {
+	return nil
 }
 
 func (s *mockStorage) Ping(ctx context.Context) error {

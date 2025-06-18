@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
+	"strings"
 	"time"
 )
 
@@ -145,7 +147,7 @@ func (s *dbStorage) Get(ctx context.Context, key string) (string, error) {
 
 	var originalURL string
 	var deletedFlag bool
-	err := row.Scan(&originalURL, deletedFlag)
+	err := row.Scan(&originalURL, &deletedFlag)
 	if err != nil {
 		return "", err
 	}
@@ -186,6 +188,28 @@ func (s *dbStorage) GetByUserID(ctx context.Context) ([]map[string]string, error
 		return nil, err
 	}
 	return urls, nil
+}
+
+func (s *dbStorage) DeleteBatch(ctx context.Context, keys []string, userID string) error {
+	placeholders := make([]string, len(keys))
+	for i := range keys {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+	}
+
+	query := fmt.Sprintf("UPDATE urls SET deleted_flag = 1 WHERE short_url IN (%s) AND user_uuid = $%d;",
+		strings.Join(placeholders, ", "), len(keys)+1)
+
+	args := make([]interface{}, len(keys)+1)
+	for i, key := range keys {
+		args[i] = key
+	}
+	args[len(keys)] = userID
+
+	_, err := s.sqlDB.ExecContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *dbStorage) Ping(ctx context.Context) error {

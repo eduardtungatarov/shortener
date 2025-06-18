@@ -62,6 +62,10 @@ func (s *memoryStorage) GetByUserID(ctx context.Context) ([]map[string]string, e
 	return urls, nil
 }
 
+func (s *memoryStorage) DeleteBatch(ctx context.Context, keys []string, userID string) error {
+	return nil
+}
+
 func (s *memoryStorage) Ping(ctx context.Context) error {
 	return nil
 }

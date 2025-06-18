@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/eduardtungatarov/shortener/internal/app"
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -26,9 +27,16 @@ type ShortURL struct {
 	OriginalURL   string `json:"-"`
 }
 
+type DeleteRequest struct {
+	UserID string
+	Urls []string
+}
+
+
 type Storage interface {
 	Set(ctx context.Context, key, value string) error
 	SetBatch(ctx context.Context, keyValues map[string]string) error
+	DeleteBatch(ctx context.Context, keys []string, userID string) error
 	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
@@ -38,6 +46,7 @@ type Handler struct {
 	storage Storage
 	baseURL string
 	log     *zap.SugaredLogger
+	deleteCh chan DeleteRequest
 }
 
 func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
@@ -45,6 +54,7 @@ func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handl
 		storage: storage,
 		baseURL: baseURL,
 		log:     log,
+		deleteCh: make(chan DeleteRequest, 1024),
 	}
 }
 
@@ -95,6 +105,7 @@ func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 
+		log.Printf("Ошибка при получении ссылки: %v", err)
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -251,7 +262,17 @@ func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	//
+	ctx := req.Context()
+	userID, ok := ctx.Value(app.UserIDKeyName).(string)
+	if !ok  {
+		log.Printf("userID not found: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+	}
+
+	h.deleteCh <- DeleteRequest{
+		UserID: userID,
+		Urls: respStr,
+	}
 
 	res.WriteHeader(http.StatusAccepted)
 }

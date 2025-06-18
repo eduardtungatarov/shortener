@@ -34,6 +34,8 @@ func main() {
 	m := middleware.MakeMiddleware(log)
 	h := handlers.MakeHandler(s, cfg.BaseURL, log)
 
+	go h.DeleteBatch(ctx)
+
 	err = server.Run(cfg, h, m)
 	if err != nil {
 		log.Fatalf("failed to run server: %v", err)

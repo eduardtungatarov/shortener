@@ -110,6 +110,10 @@ func (s *fileStorage) GetByUserID(ctx context.Context) ([]map[string]string, err
 	return urls, nil
 }
 
+func (s *fileStorage) DeleteBatch(ctx context.Context, keys []string, userID string) error {
+	return nil
+}
+
 func (s *fileStorage) Ping(ctx context.Context) error {
 	return nil
 }
