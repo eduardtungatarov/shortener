@@ -9,124 +9,124 @@ import (
 
 func TestLoadFromFlag(t *testing.T) {
 	type input struct {
-		settedServerHostPortFlag string
-		settedBaseURLFlag string
+		settedServerHostPortFlag  string
+		settedBaseURLFlag         string
 		settedFileStoragePathFlag string
-		settedServerHostPortEnv string
-		settedBaseURLEnv string
-		settedFileStoragePathEnv string
-		settedDatabaseDSNFlag string
-		settedDatabaseDSNEnv string
+		settedServerHostPortEnv   string
+		settedBaseURLEnv          string
+		settedFileStoragePathEnv  string
+		settedDatabaseDSNFlag     string
+		settedDatabaseDSNEnv      string
 	}
 	type output struct {
-		serverHostPort string
-		baseURL string
+		serverHostPort  string
+		baseURL         string
 		fileStoragePath string
-		databaseDSN string
+		databaseDSN     string
 	}
 
 	tests := []struct {
 		name   string
-		input input
+		input  input
 		output output
 	}{
 		{
 			name: "not_setted_flags_and_envs",
 			input: input{
-				settedServerHostPortFlag: "",
-				settedBaseURLFlag: "",
+				settedServerHostPortFlag:  "",
+				settedBaseURLFlag:         "",
 				settedFileStoragePathFlag: "",
-				settedDatabaseDSNFlag: "",
-				settedServerHostPortEnv: "",
-				settedBaseURLEnv: "",
+				settedDatabaseDSNFlag:     "",
+				settedServerHostPortEnv:   "",
+				settedBaseURLEnv:          "",
 			},
 			output: output{
-				serverHostPort: "localhost:8080",
-				baseURL: "http://localhost:8080",
+				serverHostPort:  "localhost:8080",
+				baseURL:         "http://localhost:8080",
 				fileStoragePath: "/tmp/short-url-db.json",
-				databaseDSN: "",
+				databaseDSN:     "",
 			},
 		},
 		{
 			name: "setted_envs",
 			input: input{
-				settedServerHostPortFlag: "blabla:80",
-				settedBaseURLFlag: "http://blabla:80",
+				settedServerHostPortFlag:  "blabla:80",
+				settedBaseURLFlag:         "http://blabla:80",
 				settedFileStoragePathFlag: "/flag/path",
-				settedDatabaseDSNFlag: "host=flag user=flag pwd=flag",
-				settedServerHostPortEnv: "",
-				settedBaseURLEnv: "",
+				settedDatabaseDSNFlag:     "host=flag user=flag pwd=flag",
+				settedServerHostPortEnv:   "",
+				settedBaseURLEnv:          "",
 			},
 			output: output{
-				serverHostPort: "blabla:80",
-				baseURL: "http://blabla:80",
+				serverHostPort:  "blabla:80",
+				baseURL:         "http://blabla:80",
 				fileStoragePath: "/flag/path",
-				databaseDSN: "host=flag user=flag pwd=flag",
+				databaseDSN:     "host=flag user=flag pwd=flag",
 			},
 		},
 		{
 			name: "setted_flags",
 			input: input{
 				settedServerHostPortFlag: "",
-				settedBaseURLFlag: "",
-				settedServerHostPortEnv: "test:8080",
-				settedBaseURLEnv: "http://test:8080",
+				settedBaseURLFlag:        "",
+				settedServerHostPortEnv:  "test:8080",
+				settedBaseURLEnv:         "http://test:8080",
 				settedFileStoragePathEnv: "/env/path",
-				settedDatabaseDSNEnv: "host=env user=env pwd=env",
+				settedDatabaseDSNEnv:     "host=env user=env pwd=env",
 			},
 			output: output{
-				serverHostPort: "test:8080",
-				baseURL: "http://test:8080",
+				serverHostPort:  "test:8080",
+				baseURL:         "http://test:8080",
 				fileStoragePath: "/env/path",
-				databaseDSN: "host=env user=env pwd=env",
+				databaseDSN:     "host=env user=env pwd=env",
 			},
 		},
 		{
 			name: "setted_server_flag_and_server_env",
 			input: input{
 				settedServerHostPortFlag: "blabla:80",
-				settedBaseURLFlag: "",
-				settedServerHostPortEnv: "test:8080",
-				settedBaseURLEnv: "",
+				settedBaseURLFlag:        "",
+				settedServerHostPortEnv:  "test:8080",
+				settedBaseURLEnv:         "",
 			},
 			output: output{
 				serverHostPort: "test:8080",
-				baseURL: "http://localhost:8080",
+				baseURL:        "http://localhost:8080",
 				//
 				fileStoragePath: "/tmp/short-url-db.json",
-				databaseDSN: "",
+				databaseDSN:     "",
 			},
 		},
 		{
 			name: "setted_server_flag_and_baseurl_env",
 			input: input{
 				settedServerHostPortFlag: "blabla:80",
-				settedBaseURLFlag: "",
-				settedServerHostPortEnv: "",
-				settedBaseURLEnv: "http://test:8080",
+				settedBaseURLFlag:        "",
+				settedServerHostPortEnv:  "",
+				settedBaseURLEnv:         "http://test:8080",
 			},
 			output: output{
 				serverHostPort: "blabla:80",
-				baseURL: "http://test:8080",
+				baseURL:        "http://test:8080",
 				//
 				fileStoragePath: "/tmp/short-url-db.json",
-				databaseDSN: "",
+				databaseDSN:     "",
 			},
 		},
 		{
 			name: "setted_baseurl_flag_and_server_env",
 			input: input{
 				settedServerHostPortFlag: "",
-				settedBaseURLFlag: "http://blabla:80",
-				settedServerHostPortEnv: "test:8080",
-				settedBaseURLEnv: "",
+				settedBaseURLFlag:        "http://blabla:80",
+				settedServerHostPortEnv:  "test:8080",
+				settedBaseURLEnv:         "",
 			},
 			output: output{
 				serverHostPort: "test:8080",
-				baseURL: "http://blabla:80",
+				baseURL:        "http://blabla:80",
 				//
 				fileStoragePath: "/tmp/short-url-db.json",
-				databaseDSN: "",
+				databaseDSN:     "",
 			},
 		},
 		{
@@ -137,7 +137,7 @@ func TestLoadFromFlag(t *testing.T) {
 			output: output{
 				fileStoragePath: "/path/flag",
 				//
-				baseURL: "http://localhost:8080",
+				baseURL:        "http://localhost:8080",
 				serverHostPort: "localhost:8080",
 			},
 		},
@@ -145,12 +145,12 @@ func TestLoadFromFlag(t *testing.T) {
 			name: "setted_filestoragepathflag_and_env",
 			input: input{
 				settedFileStoragePathFlag: "/path/flag",
-				settedFileStoragePathEnv: "/path/env",
+				settedFileStoragePathEnv:  "/path/env",
 			},
 			output: output{
 				fileStoragePath: "/path/env",
 				//
-				baseURL: "http://localhost:8080",
+				baseURL:        "http://localhost:8080",
 				serverHostPort: "localhost:8080",
 			},
 		},
@@ -158,12 +158,12 @@ func TestLoadFromFlag(t *testing.T) {
 			name: "not_setted_filestoragepathflag_and_env",
 			input: input{
 				settedFileStoragePathFlag: "",
-				settedFileStoragePathEnv: "",
+				settedFileStoragePathEnv:  "",
 			},
 			output: output{
 				fileStoragePath: "/tmp/short-url-db.json",
 				//
-				baseURL: "http://localhost:8080",
+				baseURL:        "http://localhost:8080",
 				serverHostPort: "localhost:8080",
 			},
 		},
@@ -175,8 +175,8 @@ func TestLoadFromFlag(t *testing.T) {
 			output: output{
 				databaseDSN: "host=flag port=port user=myuser password=xxxx dbname=mydb",
 				//
-				baseURL: "http://localhost:8080",
-				serverHostPort: "localhost:8080",
+				baseURL:         "http://localhost:8080",
+				serverHostPort:  "localhost:8080",
 				fileStoragePath: "/tmp/short-url-db.json",
 			},
 		},
@@ -184,13 +184,13 @@ func TestLoadFromFlag(t *testing.T) {
 			name: "setted_databasedsnflag_and_env",
 			input: input{
 				settedDatabaseDSNFlag: "host=flag port=port user=myuser password=xxxx dbname=mydb",
-				settedDatabaseDSNEnv: "host=env port=port user=myuser password=xxxx dbname=mydb",
+				settedDatabaseDSNEnv:  "host=env port=port user=myuser password=xxxx dbname=mydb",
 			},
 			output: output{
 				databaseDSN: "host=env port=port user=myuser password=xxxx dbname=mydb",
 				//
-				baseURL: "http://localhost:8080",
-				serverHostPort: "localhost:8080",
+				baseURL:         "http://localhost:8080",
+				serverHostPort:  "localhost:8080",
 				fileStoragePath: "/tmp/short-url-db.json",
 			},
 		},
@@ -198,13 +198,13 @@ func TestLoadFromFlag(t *testing.T) {
 			name: "not_setted_databasedsnflag_and_env",
 			input: input{
 				settedDatabaseDSNFlag: "",
-				settedDatabaseDSNEnv: "",
+				settedDatabaseDSNEnv:  "",
 			},
 			output: output{
 				databaseDSN: "",
 				//
-				baseURL: "http://localhost:8080",
-				serverHostPort: "localhost:8080",
+				baseURL:         "http://localhost:8080",
+				serverHostPort:  "localhost:8080",
 				fileStoragePath: "/tmp/short-url-db.json",
 			},
 		},

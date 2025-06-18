@@ -4,7 +4,7 @@ import "net/http"
 
 type responseData struct {
 	status int
-	size int
+	size   int
 }
 
 type logResponseWriter struct {

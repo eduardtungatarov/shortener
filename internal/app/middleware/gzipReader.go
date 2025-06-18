@@ -18,9 +18,9 @@ func NewGzipReader(reader io.ReadCloser) (*GzipReader, error) {
 
 	return &GzipReader{
 			reader,
-		gzipR,
-	},
-	nil
+			gzipR,
+		},
+		nil
 }
 
 func (r *GzipReader) Read(b []byte) (n int, err error) {
