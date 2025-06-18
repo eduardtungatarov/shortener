@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 )
 
 type memoryStorage struct {
@@ -37,9 +38,13 @@ func (s *memoryStorage) SetBatch(ctx context.Context, keyValues map[string]strin
 	return nil
 }
 
-func (s *memoryStorage) Get(ctx context.Context, key string) (value string, ok bool) {
+func (s *memoryStorage) Get(ctx context.Context, key string) (string, error) {
 	v, ok := s.m[key]
-	return v, ok
+	if !ok {
+		return "", errors.New("not found")
+	}
+
+	return v, nil
 }
 
 func (s *memoryStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {

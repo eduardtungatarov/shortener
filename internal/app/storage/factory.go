@@ -9,7 +9,7 @@ type Storage interface {
 	Load(ctx context.Context) error
 	Set(ctx context.Context, key, value string) error
 	SetBatch(ctx context.Context, keyValues map[string]string) error
-	Get(ctx context.Context, key string) (value string, ok bool)
+	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
 	Close() error

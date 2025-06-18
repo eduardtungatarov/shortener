@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/google/uuid"
 	"os"
 )
@@ -85,9 +86,13 @@ func (s *fileStorage) SetBatch(ctx context.Context, keyValues map[string]string)
 	return nil
 }
 
-func (s *fileStorage) Get(ctx context.Context, key string) (value string, ok bool) {
+func (s *fileStorage) Get(ctx context.Context, key string) (string, error) {
 	v, ok := s.m[key]
-	return v, ok
+	if !ok {
+		return "", errors.New("not found")
+	}
+	
+	return v, nil
 }
 
 func (s *fileStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {

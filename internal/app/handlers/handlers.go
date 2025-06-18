@@ -29,7 +29,7 @@ type ShortURL struct {
 type Storage interface {
 	Set(ctx context.Context, key, value string) error
 	SetBatch(ctx context.Context, keyValues map[string]string) error
-	Get(ctx context.Context, key string) (value string, ok bool)
+	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
 }
@@ -88,8 +88,13 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "shortUrl")
 
-	url, ok := h.storage.Get(req.Context(), shortURL)
-	if !ok {
+	url, err := h.storage.Get(req.Context(), shortURL)
+	if err != nil {
+		if errors.Is(err, storage.ErrDeleted) {
+			res.WriteHeader(http.StatusGone)
+			return
+		}
+
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
