@@ -107,9 +107,14 @@ func (s *dbStorage) Set(ctx context.Context, key, value string) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	_, err := s.sqlDB.ExecContext(ctx, `INSERT INTO urls (uuid, short_url, original_url, user_uuid)
+	userID, err := getUserIDOrPanic(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.sqlDB.ExecContext(ctx, `INSERT INTO urls (uuid, short_url, original_url, user_uuid)
 		VALUES ($1, $2, $3, $4)
-	`, uuid.NewString(), key, value, getUserIDOrPanic(ctx))
+	`, uuid.NewString(), key, value, userID)
 
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -127,10 +132,15 @@ func (s *dbStorage) SetBatch(ctx context.Context, keyValues map[string]string) e
 		return err
 	}
 
+	userID, err := getUserIDOrPanic(ctx)
+	if err != nil {
+		return err
+	}
+
 	for key, value := range keyValues {
 		_, err := tx.ExecContext(ctx,
 			"INSERT INTO urls (uuid, short_url, original_url, user_uuid)"+
-				" VALUES($1, $2, $3, $4)", uuid.NewString(), key, value, getUserIDOrPanic(ctx))
+				" VALUES($1, $2, $3, $4)", uuid.NewString(), key, value, userID)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -163,7 +173,12 @@ func (s *dbStorage) GetByUserID(ctx context.Context) ([]map[string]string, error
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
-	rows, err := s.sqlDB.QueryContext(ctx, `SELECT original_url, short_url FROM urls WHERE user_uuid = $1`, getUserIDOrPanic(ctx))
+	userID, err := getUserIDOrPanic(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.sqlDB.QueryContext(ctx, `SELECT original_url, short_url FROM urls WHERE user_uuid = $1`, userID)
 	if err != nil {
 		return nil, err
 	}

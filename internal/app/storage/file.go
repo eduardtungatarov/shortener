@@ -58,7 +58,10 @@ func (s *fileStorage) Load(ctx context.Context) error {
 }
 
 func (s *fileStorage) Set(ctx context.Context, key, value string) error {
-	userID := getUserIDOrPanic(ctx)
+	userID, err := getUserIDOrPanic(ctx)
+	if err != nil {
+		return err
+	}
 
 	v := storageString{
 		UUID:        uuid.New().String(),
@@ -66,7 +69,7 @@ func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 		OriginalURL: value,
 		UserUUID:    userID,
 	}
-	err := s.encoder.Encode(v)
+	err = s.encoder.Encode(v)
 	if err != nil {
 		return err
 	}
@@ -98,7 +101,12 @@ func (s *fileStorage) Get(ctx context.Context, key string) (string, error) {
 func (s *fileStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	var urls []map[string]string
 
-	userLinks := s.userLinks[getUserIDOrPanic(ctx)]
+	userID, err := getUserIDOrPanic(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userLinks := s.userLinks[userID]
 
 	for _, v := range userLinks {
 		urls = append(urls, map[string]string{

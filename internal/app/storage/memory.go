@@ -22,7 +22,11 @@ func (s *memoryStorage) Load(ctx context.Context) error {
 }
 
 func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
-	userID := getUserIDOrPanic(ctx)
+	userID, err := getUserIDOrPanic(ctx)
+	if err != nil {
+		return err
+	}
+
 	s.m[key] = value
 	s.userLinks[userID] = append(s.userLinks[userID], key)
 	return nil
@@ -50,7 +54,12 @@ func (s *memoryStorage) Get(ctx context.Context, key string) (string, error) {
 func (s *memoryStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	var urls []map[string]string
 
-	userLinks := s.userLinks[getUserIDOrPanic(ctx)]
+	userID, err := getUserIDOrPanic(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userLinks := s.userLinks[userID]
 
 	for _, v := range userLinks {
 		urls = append(urls, map[string]string{
