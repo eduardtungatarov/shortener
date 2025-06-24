@@ -8,17 +8,17 @@ import (
 )
 
 func TestLoadFromFlag(t *testing.T) {
-	type input struct {
-		settedServerHostPortFlag  string
-		settedBaseURLFlag         string
-		settedFileStoragePathFlag string
-		settedServerHostPortEnv   string
-		settedBaseURLEnv          string
-		settedFileStoragePathEnv  string
-		settedDatabaseDSNFlag     string
-		settedDatabaseDSNEnv      string
+	type got struct {
+		serverHostPortFlag  string
+		baseURLFlag         string
+		fileStoragePathFlag string
+		serverHostPortEnv   string
+		baseURLEnv          string
+		fileStoragePathEnv  string
+		databaseDSNFlag     string
+		databaseDSNEnv      string
 	}
-	type output struct {
+	type want struct {
 		serverHostPort  string
 		baseURL         string
 		fileStoragePath string
@@ -27,20 +27,20 @@ func TestLoadFromFlag(t *testing.T) {
 
 	tests := []struct {
 		name   string
-		input  input
-		output output
+		got  got
+		want want
 	}{
 		{
-			name: "not_setted_flags_and_envs",
-			input: input{
-				settedServerHostPortFlag:  "",
-				settedBaseURLFlag:         "",
-				settedFileStoragePathFlag: "",
-				settedDatabaseDSNFlag:     "",
-				settedServerHostPortEnv:   "",
-				settedBaseURLEnv:          "",
+			name: "not_got_flags_and_envs",
+			got: got{
+				serverHostPortFlag:  "",
+				baseURLFlag:         "",
+				fileStoragePathFlag: "",
+				databaseDSNFlag:     "",
+				serverHostPortEnv:   "",
+				baseURLEnv:          "",
 			},
-			output: output{
+			want: want{
 				serverHostPort:  "localhost:8080",
 				baseURL:         "http://localhost:8080",
 				fileStoragePath: "/tmp/short-url-db.json",
@@ -48,16 +48,16 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_envs",
-			input: input{
-				settedServerHostPortFlag:  "blabla:80",
-				settedBaseURLFlag:         "http://blabla:80",
-				settedFileStoragePathFlag: "/flag/path",
-				settedDatabaseDSNFlag:     "host=flag user=flag pwd=flag",
-				settedServerHostPortEnv:   "",
-				settedBaseURLEnv:          "",
+			name: "got_envs",
+			got: got{
+				serverHostPortFlag:  "blabla:80",
+				baseURLFlag:         "http://blabla:80",
+				fileStoragePathFlag: "/flag/path",
+				databaseDSNFlag:     "host=flag user=flag pwd=flag",
+				serverHostPortEnv:   "",
+				baseURLEnv:          "",
 			},
-			output: output{
+			want: want{
 				serverHostPort:  "blabla:80",
 				baseURL:         "http://blabla:80",
 				fileStoragePath: "/flag/path",
@@ -65,16 +65,16 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_flags",
-			input: input{
-				settedServerHostPortFlag: "",
-				settedBaseURLFlag:        "",
-				settedServerHostPortEnv:  "test:8080",
-				settedBaseURLEnv:         "http://test:8080",
-				settedFileStoragePathEnv: "/env/path",
-				settedDatabaseDSNEnv:     "host=env user=env pwd=env",
+			name: "got_flags",
+			got: got{
+				serverHostPortFlag: "",
+				baseURLFlag:        "",
+				serverHostPortEnv:  "test:8080",
+				baseURLEnv:         "http://test:8080",
+				fileStoragePathEnv: "/env/path",
+				databaseDSNEnv:     "host=env user=env pwd=env",
 			},
-			output: output{
+			want: want{
 				serverHostPort:  "test:8080",
 				baseURL:         "http://test:8080",
 				fileStoragePath: "/env/path",
@@ -82,14 +82,14 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_server_flag_and_server_env",
-			input: input{
-				settedServerHostPortFlag: "blabla:80",
-				settedBaseURLFlag:        "",
-				settedServerHostPortEnv:  "test:8080",
-				settedBaseURLEnv:         "",
+			name: "got_server_flag_and_server_env",
+			got: got{
+				serverHostPortFlag: "blabla:80",
+				baseURLFlag:        "",
+				serverHostPortEnv:  "test:8080",
+				baseURLEnv:         "",
 			},
-			output: output{
+			want: want{
 				serverHostPort: "test:8080",
 				baseURL:        "http://localhost:8080",
 				//
@@ -98,14 +98,14 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_server_flag_and_baseurl_env",
-			input: input{
-				settedServerHostPortFlag: "blabla:80",
-				settedBaseURLFlag:        "",
-				settedServerHostPortEnv:  "",
-				settedBaseURLEnv:         "http://test:8080",
+			name: "got_server_flag_and_baseurl_env",
+			got: got{
+				serverHostPortFlag: "blabla:80",
+				baseURLFlag:        "",
+				serverHostPortEnv:  "",
+				baseURLEnv:         "http://test:8080",
 			},
-			output: output{
+			want: want{
 				serverHostPort: "blabla:80",
 				baseURL:        "http://test:8080",
 				//
@@ -114,14 +114,14 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_baseurl_flag_and_server_env",
-			input: input{
-				settedServerHostPortFlag: "",
-				settedBaseURLFlag:        "http://blabla:80",
-				settedServerHostPortEnv:  "test:8080",
-				settedBaseURLEnv:         "",
+			name: "got_baseurl_flag_and_server_env",
+			got: got{
+				serverHostPortFlag: "",
+				baseURLFlag:        "http://blabla:80",
+				serverHostPortEnv:  "test:8080",
+				baseURLEnv:         "",
 			},
-			output: output{
+			want: want{
 				serverHostPort: "test:8080",
 				baseURL:        "http://blabla:80",
 				//
@@ -130,11 +130,11 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_filestoragepathflag",
-			input: input{
-				settedFileStoragePathFlag: "/path/flag",
+			name: "got_filestoragepathflag",
+			got: got{
+				fileStoragePathFlag: "/path/flag",
 			},
-			output: output{
+			want: want{
 				fileStoragePath: "/path/flag",
 				//
 				baseURL:        "http://localhost:8080",
@@ -142,12 +142,12 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_filestoragepathflag_and_env",
-			input: input{
-				settedFileStoragePathFlag: "/path/flag",
-				settedFileStoragePathEnv:  "/path/env",
+			name: "got_filestoragepathflag_and_env",
+			got: got{
+				fileStoragePathFlag: "/path/flag",
+				fileStoragePathEnv:  "/path/env",
 			},
-			output: output{
+			want: want{
 				fileStoragePath: "/path/env",
 				//
 				baseURL:        "http://localhost:8080",
@@ -155,12 +155,12 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "not_setted_filestoragepathflag_and_env",
-			input: input{
-				settedFileStoragePathFlag: "",
-				settedFileStoragePathEnv:  "",
+			name: "not_got_filestoragepathflag_and_env",
+			got: got{
+				fileStoragePathFlag: "",
+				fileStoragePathEnv:  "",
 			},
-			output: output{
+			want: want{
 				fileStoragePath: "/tmp/short-url-db.json",
 				//
 				baseURL:        "http://localhost:8080",
@@ -168,11 +168,11 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_databasedsnflag",
-			input: input{
-				settedDatabaseDSNFlag: "host=flag port=port user=myuser password=xxxx dbname=mydb",
+			name: "got_databasedsnflag",
+			got: got{
+				databaseDSNFlag: "host=flag port=port user=myuser password=xxxx dbname=mydb",
 			},
-			output: output{
+			want: want{
 				databaseDSN: "host=flag port=port user=myuser password=xxxx dbname=mydb",
 				//
 				baseURL:         "http://localhost:8080",
@@ -181,12 +181,12 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "setted_databasedsnflag_and_env",
-			input: input{
-				settedDatabaseDSNFlag: "host=flag port=port user=myuser password=xxxx dbname=mydb",
-				settedDatabaseDSNEnv:  "host=env port=port user=myuser password=xxxx dbname=mydb",
+			name: "got_databasedsnflag_and_env",
+			got: got{
+				databaseDSNFlag: "host=flag port=port user=myuser password=xxxx dbname=mydb",
+				databaseDSNEnv:  "host=env port=port user=myuser password=xxxx dbname=mydb",
 			},
-			output: output{
+			want: want{
 				databaseDSN: "host=env port=port user=myuser password=xxxx dbname=mydb",
 				//
 				baseURL:         "http://localhost:8080",
@@ -195,12 +195,12 @@ func TestLoadFromFlag(t *testing.T) {
 			},
 		},
 		{
-			name: "not_setted_databasedsnflag_and_env",
-			input: input{
-				settedDatabaseDSNFlag: "",
-				settedDatabaseDSNEnv:  "",
+			name: "not_got_databasedsnflag_and_env",
+			got: got{
+				databaseDSNFlag: "",
+				databaseDSNEnv:  "",
 			},
-			output: output{
+			want: want{
 				databaseDSN: "",
 				//
 				baseURL:         "http://localhost:8080",
@@ -215,17 +215,17 @@ func TestLoadFromFlag(t *testing.T) {
 			// настраиваем флаги для теста
 			oldOsArgs := os.Args
 			os.Args = []string{"cmd"}
-			if tt.input.settedServerHostPortFlag != "" {
-				os.Args = append(os.Args, "-a", tt.input.settedServerHostPortFlag)
+			if tt.got.serverHostPortFlag != "" {
+				os.Args = append(os.Args, "-a", tt.got.serverHostPortFlag)
 			}
-			if tt.input.settedBaseURLFlag != "" {
-				os.Args = append(os.Args, "-b", tt.input.settedBaseURLFlag)
+			if tt.got.baseURLFlag != "" {
+				os.Args = append(os.Args, "-b", tt.got.baseURLFlag)
 			}
-			if tt.input.settedFileStoragePathFlag != "" {
-				os.Args = append(os.Args, "-f", tt.input.settedFileStoragePathFlag)
+			if tt.got.fileStoragePathFlag != "" {
+				os.Args = append(os.Args, "-f", tt.got.fileStoragePathFlag)
 			}
-			if tt.input.settedDatabaseDSNFlag != "" {
-				os.Args = append(os.Args, "-d", tt.input.settedDatabaseDSNFlag)
+			if tt.got.databaseDSNFlag != "" {
+				os.Args = append(os.Args, "-d", tt.got.databaseDSNFlag)
 			}
 
 			// настраиваем env для теста
@@ -237,30 +237,30 @@ func TestLoadFromFlag(t *testing.T) {
 			assert.NoError(t, err)
 			err = os.Unsetenv("DATABASE_DSN")
 			assert.NoError(t, err)
-			if tt.input.settedServerHostPortEnv != "" {
-				err := os.Setenv("SERVER_ADDRESS", tt.input.settedServerHostPortEnv)
+			if tt.got.serverHostPortEnv != "" {
+				err := os.Setenv("SERVER_ADDRESS", tt.got.serverHostPortEnv)
 				assert.NoError(t, err)
 			}
-			if tt.input.settedBaseURLEnv != "" {
-				err := os.Setenv("BASE_URL", tt.input.settedBaseURLEnv)
+			if tt.got.baseURLEnv != "" {
+				err := os.Setenv("BASE_URL", tt.got.baseURLEnv)
 				assert.NoError(t, err)
 			}
-			if tt.input.settedFileStoragePathEnv != "" {
-				err := os.Setenv("FILE_STORAGE_PATH", tt.input.settedFileStoragePathEnv)
+			if tt.got.fileStoragePathEnv != "" {
+				err := os.Setenv("FILE_STORAGE_PATH", tt.got.fileStoragePathEnv)
 				assert.NoError(t, err)
 			}
-			if tt.input.settedDatabaseDSNEnv != "" {
-				err := os.Setenv("DATABASE_DSN", tt.input.settedDatabaseDSNEnv)
+			if tt.got.databaseDSNEnv != "" {
+				err := os.Setenv("DATABASE_DSN", tt.got.databaseDSNEnv)
 				assert.NoError(t, err)
 			}
 
 			// проверяем
 			resetCommandLineFlagSet()
 			config := LoadFromFlag()
-			assert.Equal(t, tt.output.serverHostPort, config.ServerHostPort, "Ожидается что хост и порт сервера = %v, по факту = %v", tt.output.serverHostPort, config.ServerHostPort)
-			assert.Equal(t, tt.output.baseURL, config.BaseURL, "Ожидается что base URL = %v, по факту = %v", tt.output.baseURL, config.BaseURL)
-			assert.Equal(t, tt.output.fileStoragePath, config.FileStoragePath, "Ожидается что fileStoragePath = %v, по факту = %v", tt.output.fileStoragePath, config.FileStoragePath)
-			assert.Equal(t, tt.output.databaseDSN, config.Database.DSN, "Ожидается что databaseDSN = %v, по факту = %v", tt.output.databaseDSN, config.Database.DSN)
+			assert.Equal(t, tt.want.serverHostPort, config.ServerHostPort, "Ожидается что хост и порт сервера = %v, по факту = %v", tt.want.serverHostPort, config.ServerHostPort)
+			assert.Equal(t, tt.want.baseURL, config.BaseURL, "Ожидается что base URL = %v, по факту = %v", tt.want.baseURL, config.BaseURL)
+			assert.Equal(t, tt.want.fileStoragePath, config.FileStoragePath, "Ожидается что fileStoragePath = %v, по факту = %v", tt.want.fileStoragePath, config.FileStoragePath)
+			assert.Equal(t, tt.want.databaseDSN, config.Database.DSN, "Ожидается что databaseDSN = %v, по факту = %v", tt.want.databaseDSN, config.Database.DSN)
 
 			// восстанавливаем флаги
 			os.Args = oldOsArgs
