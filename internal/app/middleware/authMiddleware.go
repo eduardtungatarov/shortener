@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/eduardtungatarov/shortener/internal/app"
+	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"net/http"
@@ -16,7 +16,7 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 		var token string
 		var setCookie bool
 
-		c, err := req.Cookie(string(app.UserIDKeyName))
+		c, err := req.Cookie(string(config.UserIDKeyName))
 		if err != nil {
 			if !errors.Is(err, http.ErrNoCookie) {
 				res.WriteHeader(http.StatusInternalServerError)
@@ -39,12 +39,12 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 		}
 
 		ctx := req.Context()
-		newCtx := context.WithValue(ctx, app.UserIDKeyName, userID)
+		newCtx := context.WithValue(ctx, config.UserIDKeyName, userID)
 		req = req.WithContext(newCtx)
 
 		if setCookie {
 			cookie := &http.Cookie{
-				Name:  string(app.UserIDKeyName),
+				Name:  string(config.UserIDKeyName),
 				Value: token,
 			}
 			http.SetCookie(res, cookie)

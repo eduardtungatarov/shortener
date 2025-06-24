@@ -6,11 +6,15 @@ import (
 	"time"
 )
 
+type UserIDKey string
+
 const (
 	DefaultServerHostPort  = "localhost:8080"
 	DefaultBaseURL         = "http://localhost:8080"
 	DefaultFileStoragePath = "/tmp/short-url-db.json"
 	DefaultDatabaseDSN     = ""
+
+ 	UserIDKeyName UserIDKey = "userId"
 )
 
 type Config struct {

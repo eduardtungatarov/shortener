@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eduardtungatarov/shortener/internal/app"
+	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
@@ -263,7 +263,7 @@ func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Reques
 	}
 
 	ctx := req.Context()
-	userID, ok := ctx.Value(app.UserIDKeyName).(string)
+	userID, ok := ctx.Value(config.UserIDKeyName).(string)
 	if !ok  {
 		log.Printf("userID not found: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
