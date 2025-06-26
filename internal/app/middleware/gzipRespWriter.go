@@ -14,7 +14,7 @@ func NewGzipResponseWriter(res http.ResponseWriter) *GzipResponseWriter {
 	w := gzip.NewWriter(res)
 	return &GzipResponseWriter{
 		ResponseWriter: res,
-		gzipWriter: w,
+		gzipWriter:     w,
 	}
 }
 

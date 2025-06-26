@@ -6,26 +6,30 @@ import (
 	"time"
 )
 
+type UserIDKey string
+
 const (
-	DefaultServerHostPort = "localhost:8080"
-	DefaultBaseURL        = "http://localhost:8080"
-	DefaultFileStoragePath       = "/tmp/short-url-db.json"
-	DefaultDatabaseDSN       = ""
+	DefaultServerHostPort  = "localhost:8080"
+	DefaultBaseURL         = "http://localhost:8080"
+	DefaultFileStoragePath = "/tmp/short-url-db.json"
+	DefaultDatabaseDSN     = ""
+
+ 	UserIDKeyName UserIDKey = "userId"
 )
 
 type Config struct {
-	ServerHostPort string
-	BaseURL string
+	ServerHostPort  string
+	BaseURL         string
 	FileStoragePath string
 	Database
 }
 
 type Database struct {
-	DSN string
+	DSN     string
 	Timeout time.Duration
 }
 
-func LoadFromFlag() Config  {
+func LoadFromFlag() Config {
 	flagServer := flag.String("a", DefaultServerHostPort, "отвечает за адрес запуска HTTP-сервера")
 	flagBaseURL := flag.String("b", DefaultBaseURL, "отвечает за базовый адрес результирующего сокращённого URL")
 	flagFileStoragePath := flag.String("f", DefaultFileStoragePath, "путь до файла, куда сохраняются все сокращенные URL")
@@ -53,11 +57,11 @@ func LoadFromFlag() Config  {
 	}
 
 	return Config{
-		ServerHostPort: *flagServer,
-		BaseURL: *flagBaseURL,
+		ServerHostPort:  *flagServer,
+		BaseURL:         *flagBaseURL,
 		FileStoragePath: *flagFileStoragePath,
 		Database: Database{
-			DSN: *databaseDSN,
+			DSN:     *databaseDSN,
 			Timeout: time.Second * 1,
 		},
 	}

@@ -10,7 +10,7 @@ func MakeLogger() (*zap.SugaredLogger, error) {
 	return log.Sugar(), nil
 }
 
-func MakeNop() (*zap.SugaredLogger, error)  {
+func MakeNop() (*zap.SugaredLogger, error) {
 	log := zap.NewNop()
 	return log.Sugar(), nil
 }
