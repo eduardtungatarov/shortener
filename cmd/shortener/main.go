@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/logger"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 	"github.com/eduardtungatarov/shortener/internal/app/server"
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 func main() {
@@ -32,7 +32,9 @@ func main() {
 	}
 
 	m := middleware.MakeMiddleware(log)
-	h := handlers.MakeHandler(ctx, s, cfg.BaseURL, log)
+	h := handlers.MakeHandler(s, cfg.BaseURL, log)
+
+	go h.DeleteBatch(ctx)
 
 	err = server.Run(cfg, h, m)
 	if err != nil {

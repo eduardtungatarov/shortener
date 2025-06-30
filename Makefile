@@ -26,5 +26,13 @@ test12:
           -binary-path=cmd/shortener/shortener \
           -database-dsn='host=localhost port=5432 user=myuser password=mypassword dbname=mydatabase sslmode=disable'
 
+test14:
+	shortenertestbeta -test.v -test.run=^TestIteration14$ \
+          -binary-path=cmd/shortener/shortener \
+          -database-dsn='***postgres:5432/praktikum?sslmode=disable'
+
 gotest:
 	go test -v ./...
+
+fmt:
+	go fmt ./...

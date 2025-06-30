@@ -15,7 +15,7 @@ func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error
 
 func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	r := chi.NewRouter()
-	r.Use(m.WithLog)
+	r.Use(m.WithLog, m.WithAuth)
 
 	r.Get(
 		"/{shortUrl}",
@@ -25,6 +25,11 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	r.Get(
 		"/ping",
 		h.HandleGetPing,
+	)
+
+	r.Get(
+		"/api/user/urls",
+		h.HandleGetUserUrls,
 	)
 
 	gzipReqG := r.Group(func(r chi.Router) {
@@ -38,6 +43,10 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 		r.Use(m.WithGzipResp, m.WithJSONReqCheck)
 		r.Post("/api/shorten", h.HandleShorten)
 		r.Post("/api/shorten/batch", h.HandleShortenBatch)
+		r.Delete(
+			"/api/user/urls",
+			h.HandleDeleteUserUrls,
+		)
 	})
 
 	return r

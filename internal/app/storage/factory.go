@@ -9,12 +9,14 @@ type Storage interface {
 	Load(ctx context.Context) error
 	Set(ctx context.Context, key, value string) error
 	SetBatch(ctx context.Context, keyValues map[string]string) error
-	Get(ctx context.Context, key string) (value string, ok bool)
+	DeleteBatch(ctx context.Context, keys []string, userID string) error
+	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
+	GetByUserID(ctx context.Context) ([]map[string]string, error)
 	Close() error
 }
 
-func MakeStorage(cfg config.Config) (Storage, error)  {
+func MakeStorage(cfg config.Config) (Storage, error) {
 	if cfg.Database.DSN != config.DefaultDatabaseDSN {
 		return MakeDBStorage(cfg.Database)
 	}
