@@ -5,6 +5,7 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"net/http"
 )
 
@@ -16,6 +17,8 @@ func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error
 func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	r := chi.NewRouter()
 	r.Use(m.WithLog, m.WithAuth)
+
+	r.Mount("/debug", chiMiddleware.Profiler())
 
 	r.Get(
 		"/{shortUrl}",

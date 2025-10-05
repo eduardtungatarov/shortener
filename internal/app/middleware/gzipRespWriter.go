@@ -10,12 +10,16 @@ type GzipResponseWriter struct {
 	gzipWriter *gzip.Writer
 }
 
-func NewGzipResponseWriter(res http.ResponseWriter) *GzipResponseWriter {
-	w := gzip.NewWriter(res)
+func NewGzipResponseWriter(res http.ResponseWriter, level int) (*GzipResponseWriter, error) {
+	w, err := gzip.NewWriterLevel(res, level)
+	if err != nil {
+		return nil, err
+	}
+
 	return &GzipResponseWriter{
 		ResponseWriter: res,
 		gzipWriter:     w,
-	}
+	}, nil
 }
 
 func (w *GzipResponseWriter) Write(b []byte) (int, error) {

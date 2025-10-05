@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"compress/gzip"
 	"go.uber.org/zap"
 	"net/http"
 	"strings"
@@ -52,7 +53,11 @@ func (m *Middleware) WithGzipResp(next http.Handler) http.Handler {
 		oRes := res
 
 		if strings.Contains(req.Header.Get("Accept-Encoding"), "gzip") {
-			gRes := NewGzipResponseWriter(oRes)
+			gRes, err := NewGzipResponseWriter(oRes, gzip.BestSpeed)
+			if err != nil {
+				res.WriteHeader(http.StatusInternalServerError)
+				return
+			}
 			defer gRes.Close()
 			oRes.Header().Set("Content-Encoding", "gzip")
 
