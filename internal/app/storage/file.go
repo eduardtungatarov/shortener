@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
 	"os"
+
+	"github.com/google/uuid"
 )
 
 type storageString struct {
@@ -94,7 +95,7 @@ func (s *fileStorage) Get(ctx context.Context, key string) (string, error) {
 	if !ok {
 		return "", errors.New("not found")
 	}
-	
+
 	return v, nil
 }
 

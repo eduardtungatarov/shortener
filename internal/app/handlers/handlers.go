@@ -6,13 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eduardtungatarov/shortener/internal/app/config"
-	"github.com/eduardtungatarov/shortener/internal/app/storage"
-	"github.com/go-chi/chi/v5"
-	"go.uber.org/zap"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"go.uber.org/zap"
+
+	"github.com/eduardtungatarov/shortener/internal/app/config"
+	"github.com/eduardtungatarov/shortener/internal/app/storage"
 )
 
 type OriginalURL struct {
@@ -29,9 +31,8 @@ type ShortURL struct {
 
 type DeleteRequest struct {
 	UserID string
-	Urls []string
+	Urls   []string
 }
-
 
 type Storage interface {
 	Set(ctx context.Context, key, value string) error
@@ -43,17 +44,17 @@ type Storage interface {
 }
 
 type Handler struct {
-	storage Storage
-	baseURL string
-	log     *zap.SugaredLogger
+	storage  Storage
+	baseURL  string
+	log      *zap.SugaredLogger
 	deleteCh chan DeleteRequest
 }
 
 func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
 	return &Handler{
-		storage: storage,
-		baseURL: baseURL,
-		log:     log,
+		storage:  storage,
+		baseURL:  baseURL,
+		log:      log,
 		deleteCh: make(chan DeleteRequest, 1024),
 	}
 }
@@ -264,14 +265,14 @@ func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Reques
 
 	ctx := req.Context()
 	userID, ok := ctx.Value(config.UserIDKeyName).(string)
-	if !ok  {
+	if !ok {
 		log.Printf("userID not found: %v", err)
 		res.WriteHeader(http.StatusInternalServerError)
 	}
 
 	h.deleteCh <- DeleteRequest{
 		UserID: userID,
-		Urls: respStr,
+		Urls:   respStr,
 	}
 
 	res.WriteHeader(http.StatusAccepted)

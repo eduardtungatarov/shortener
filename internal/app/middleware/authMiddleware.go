@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/eduardtungatarov/shortener/internal/app/config"
+	"net/http"
+
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
-	"net/http"
+
+	"github.com/eduardtungatarov/shortener/internal/app/config"
 )
 
 func (m *Middleware) WithAuth(next http.Handler) http.Handler {
@@ -62,9 +64,9 @@ type Claims struct {
 const secretKey = "supersecretkey"
 
 func buildJWTString() (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{},
-		UserID: uuid.NewString(),
+		UserID:           uuid.NewString(),
 	})
 
 	tokenString, err := token.SignedString([]byte(secretKey))

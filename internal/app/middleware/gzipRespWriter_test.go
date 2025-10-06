@@ -26,7 +26,7 @@ func BenchmarkWriteHuffmanOnly(b *testing.B) {
 	runWithLevel(b, gzip.HuffmanOnly)
 }
 
-func runWithLevel(b * testing.B, level int) {
+func runWithLevel(b *testing.B, level int) {
 	w := httptest.NewRecorder()
 	g, _ := NewGzipResponseWriter(w, level)
 	b.ResetTimer()

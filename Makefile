@@ -34,5 +34,5 @@ test14:
 gotest:
 	go test -v ./...
 
-fmt:
-	go fmt ./...
+goimports:
+	goimports -local github.com/eduardtungatarov/shortener -w .

@@ -2,9 +2,10 @@ package config
 
 import (
 	"flag"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadFromFlag(t *testing.T) {
@@ -26,7 +27,7 @@ func TestLoadFromFlag(t *testing.T) {
 	}
 
 	tests := []struct {
-		name   string
+		name string
 		got  got
 		want want
 	}{

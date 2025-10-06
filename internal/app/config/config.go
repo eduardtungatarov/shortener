@@ -14,7 +14,7 @@ const (
 	DefaultFileStoragePath = "/tmp/short-url-db.json"
 	DefaultDatabaseDSN     = ""
 
- 	UserIDKeyName UserIDKey = "userId"
+	UserIDKeyName UserIDKey = "userId"
 )
 
 type Config struct {

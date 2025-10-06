@@ -2,10 +2,11 @@ package middleware
 
 import (
 	"compress/gzip"
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type Middleware struct {

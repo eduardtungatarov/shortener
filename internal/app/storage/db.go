@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/eduardtungatarov/shortener/internal/app/config"
+	"strings"
+	"time"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"strings"
-	"time"
+
+	"github.com/eduardtungatarov/shortener/internal/app/config"
 )
 
 var ErrConflict = errors.New("data conflict")

@@ -1,12 +1,14 @@
 package server
 
 import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"net/http"
 )
 
 func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error {
