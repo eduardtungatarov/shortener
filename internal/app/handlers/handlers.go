@@ -1,3 +1,4 @@
+// Package handlers http обработчики приложения.
 package handlers
 
 import (
@@ -17,11 +18,13 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
 )
 
+// OriginalURL для передачи на сокращение в пачке.
 type OriginalURL struct {
 	CorrelationID string `json:"correlation_id"`
 	OriginalURL   string `json:"original_url"`
 }
 
+// ShortURL для передачи сокращенной ссылки в пачке.
 type ShortURL struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
@@ -29,11 +32,13 @@ type ShortURL struct {
 	OriginalURL   string `json:"-"`
 }
 
+// DeleteRequest запрос удаления пользователем своих URL.
 type DeleteRequest struct {
 	UserID string
 	Urls   []string
 }
 
+// Storage интерфейс хранилища ссылок.
 type Storage interface {
 	Set(ctx context.Context, key, value string) error
 	SetBatch(ctx context.Context, keyValues map[string]string) error
@@ -43,6 +48,7 @@ type Storage interface {
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
 }
 
+// Handler хендлер.
 type Handler struct {
 	storage  Storage
 	baseURL  string
@@ -50,6 +56,7 @@ type Handler struct {
 	deleteCh chan DeleteRequest
 }
 
+// MakeHandler конструктор хендлеров.
 func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
 	return &Handler{
 		storage:  storage,
@@ -59,6 +66,8 @@ func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handl
 	}
 }
 
+// HandlePost получает из тела запроса (text/plain) ссылку для сокращения.
+// Возвращает в ответ (text/plain) сокращенную ссылку.
 func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -96,6 +105,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// HandleGet берет сокращенную ссылку (из URLParam) и редиректит на целевой URL.
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "shortUrl")
 
@@ -115,6 +125,8 @@ func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
+// HandleShorten получает из тела запроса (application/json) ссылку для сокращения.
+// Возвращает в ответ (application/json) сокращенную ссылку.
 func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	reqStr := struct {
 		URL string `json:"url"`
@@ -162,6 +174,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+// HandleGetPing проверяет что все подсистемы сервиса доступны.
 func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
 	err := h.storage.Ping(req.Context())
 	if err != nil {
@@ -172,6 +185,8 @@ func (h *Handler) HandleGetPing(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
+// HandleShortenBatch получает из json тела запроса пачку URL на сокращение.
+// Возвращает в ответ в виде json список коротких ссылок.
 func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request) {
 	var batch []OriginalURL
 
@@ -210,6 +225,7 @@ func (h *Handler) HandleShortenBatch(res http.ResponseWriter, req *http.Request)
 	}
 }
 
+// HandleGetUserUrls отдает в ответ для юзера список переданных ранее ссылок на сокращение.
 func (h *Handler) HandleGetUserUrls(res http.ResponseWriter, req *http.Request) {
 	urls, err := h.storage.GetByUserID(req.Context())
 	if err != nil {
@@ -251,6 +267,7 @@ func (h *Handler) HandleGetUserUrls(res http.ResponseWriter, req *http.Request) 
 	}
 }
 
+// HandleDeleteUserUrls принимает в теле запроса список id сокращенных ссылок на удаление.
 func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
 

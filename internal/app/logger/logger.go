@@ -1,3 +1,4 @@
+// Package logger логер.
 package logger
 
 import "go.uber.org/zap"

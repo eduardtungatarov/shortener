@@ -1,3 +1,8 @@
+// Package config для работы с настройками приложения.
+// Вызов LoadFromFlag() заполнит настройки из env, flags, если не задано - дефолтные настройки.
+// Настройки вернутся в виде структуры Config.
+//
+//	cfg := config.LoadFromFlag()
 package config
 
 import (
@@ -6,29 +11,39 @@ import (
 	"time"
 )
 
+// UserIDKey тип ключа в контексте для поиска userID авторизованного пользователя приложения.
 type UserIDKey string
 
 const (
-	DefaultServerHostPort  = "localhost:8080"
-	DefaultBaseURL         = "http://localhost:8080"
+	// DefaultServerHostPort дефолтный адрес запуска HTTP сервера.
+	DefaultServerHostPort = "localhost:8080"
+	// DefaultBaseURL дефолтный базовый адрес результирующего сокращённого URL.
+	DefaultBaseURL = "http://localhost:8080"
+	// DefaultFileStoragePath путь до файла, куда сохраняются все сокращенные URL.
 	DefaultFileStoragePath = "/tmp/short-url-db.json"
-	DefaultDatabaseDSN     = ""
+	// DefaultDatabaseDSN строка с адресом подключения к БД.
+	DefaultDatabaseDSN = ""
 
+	// UserIDKeyName имя ключа для поиска в контексте userID авторизованного пользователя сервиса.
 	UserIDKeyName UserIDKey = "userId"
 )
 
+// Config настройки сервиса.
 type Config struct {
-	ServerHostPort  string
-	BaseURL         string
-	FileStoragePath string
-	Database
+	ServerHostPort  string // адрес запуска HTTP сервера
+	BaseURL         string // базовый адрес результирующего сокращённого URL
+	FileStoragePath string // путь до файла, куда сохраняются все сокращенные URL
+	Database               // настройки бд
 }
 
+// Database настройки БД хранения сокращенных ссылок.
 type Database struct {
-	DSN     string
-	Timeout time.Duration
+	DSN     string        // строка с адресом подключения к БД
+	Timeout time.Duration // таймаут
 }
 
+// LoadFromFlag инициализация конфига приложения.
+// Приоритет настроек: env, flags, default.
 func LoadFromFlag() Config {
 	flagServer := flag.String("a", DefaultServerHostPort, "отвечает за адрес запуска HTTP-сервера")
 	flagBaseURL := flag.String("b", DefaultBaseURL, "отвечает за базовый адрес результирующего сокращённого URL")

@@ -1,3 +1,4 @@
+// Package middleware http middleware для запросов.
 package middleware
 
 import (

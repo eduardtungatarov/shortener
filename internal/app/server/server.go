@@ -1,3 +1,4 @@
+// Package server роутинг и ф-я запуска http сервера приложения.
 package server
 
 import (

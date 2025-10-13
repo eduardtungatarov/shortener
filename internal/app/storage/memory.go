@@ -1,3 +1,4 @@
+// Package storage варианты хранения ссылок.
 package storage
 
 import (
