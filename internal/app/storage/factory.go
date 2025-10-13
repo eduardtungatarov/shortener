@@ -6,6 +6,7 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 )
 
+// Storage интерфейс.
 type Storage interface {
 	Load(ctx context.Context) error
 	Set(ctx context.Context, key, value string) error
@@ -17,6 +18,7 @@ type Storage interface {
 	Close() error
 }
 
+// MakeStorage создать конкретный storage в зависимости от настроек.
 func MakeStorage(cfg config.Config) (Storage, error) {
 	if cfg.Database.DSN != config.DefaultDatabaseDSN {
 		return MakeDBStorage(cfg.Database)

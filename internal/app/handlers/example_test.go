@@ -27,6 +27,7 @@ func ExampleHandler_HandlePost() {
 	if resp.StatusCode == http.StatusCreated {
 		// В теле ответа находится сокращенная ссылка.
 		shortURL, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
 		fmt.Println(shortURL) // http://localhost:8080/e9fb5de
 	}
 }
@@ -45,6 +46,7 @@ func ExampleHandler_HandleGet() {
 	// Отправляем запрос.
 	client := http.Client{}
 	resp, _ := client.Do(req)
+	defer resp.Body.Close()
 
 	// Обрабатываем успешный редирект.
 	if resp.StatusCode == http.StatusTemporaryRedirect {
@@ -75,6 +77,7 @@ func ExampleHandler_HandleShorten() {
 	if resp.StatusCode == http.StatusCreated {
 		// В теле ответа находится json с сокращенной ссылкой.
 		jsonBody, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
 
 		reqStr := struct {
 			URL string `json:"url"`
@@ -97,6 +100,7 @@ func ExampleHandler_HandleGetPing() {
 	// Отправляем запрос.
 	client := http.Client{}
 	resp, _ := client.Do(req)
+	defer resp.Body.Close()
 
 	// Сервис и его подсистемы доступны.
 	if resp.StatusCode == http.StatusOK {
@@ -139,6 +143,7 @@ func ExampleHandler_HandleShortenBatch() {
 		}
 
 		body, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
 
 		_ = json.Unmarshal(body, &respStr)
 
@@ -176,6 +181,7 @@ func ExampleHandler_HandleGetUserUrls() {
 		}
 
 		body, _ := io.ReadAll(resp.Body)
+		defer resp.Body.Close()
 
 		_ = json.Unmarshal(body, &respStr)
 

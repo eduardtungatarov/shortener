@@ -15,7 +15,10 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 )
 
+// ErrConflict если в storage произошел конфликт, например ссылка уже есть в бд.
 var ErrConflict = errors.New("data conflict")
+
+// ErrDeleted если ссылка была удалена.
 var ErrDeleted = errors.New("url deleted")
 
 type dbStorage struct {
@@ -23,6 +26,7 @@ type dbStorage struct {
 	timeout time.Duration
 }
 
+// MakeDBStorage конструктор БД storage.
 func MakeDBStorage(cfg config.Database) (*dbStorage, error) {
 	sqlDB, err := sql.Open("pgx", cfg.DSN)
 	if err != nil {
@@ -35,6 +39,7 @@ func MakeDBStorage(cfg config.Database) (*dbStorage, error) {
 	}, nil
 }
 
+// Load накат миграций в бд.
 func (s *dbStorage) Load(ctx context.Context) error {
 	createTableSQL := `
         CREATE TABLE IF NOT EXISTS urls (
@@ -105,6 +110,7 @@ func (s *dbStorage) Load(ctx context.Context) error {
 	return nil
 }
 
+// Set сохранить ссылку.
 func (s *dbStorage) Set(ctx context.Context, key, value string) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
@@ -128,6 +134,7 @@ func (s *dbStorage) Set(ctx context.Context, key, value string) error {
 	return err
 }
 
+// SetBatch сохранить ссылки пачкой.
 func (s *dbStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
 	tx, err := s.sqlDB.Begin()
 	if err != nil {
@@ -151,6 +158,7 @@ func (s *dbStorage) SetBatch(ctx context.Context, keyValues map[string]string) e
 	return tx.Commit()
 }
 
+// Get получить ссылку по ключу.
 func (s *dbStorage) Get(ctx context.Context, key string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
@@ -171,6 +179,7 @@ func (s *dbStorage) Get(ctx context.Context, key string) (string, error) {
 	return originalURL, nil
 }
 
+// GetByUserID получить все ссылки пользователя.
 func (s *dbStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
@@ -207,6 +216,7 @@ func (s *dbStorage) GetByUserID(ctx context.Context) ([]map[string]string, error
 	return urls, nil
 }
 
+// DeleteBatch удалить ссылки пачкой.
 func (s *dbStorage) DeleteBatch(ctx context.Context, keys []string, userID string) error {
 	placeholders := make([]string, len(keys))
 	for i := range keys {
@@ -229,6 +239,7 @@ func (s *dbStorage) DeleteBatch(ctx context.Context, keys []string, userID strin
 	return nil
 }
 
+// Ping проверка работоспособности БД.
 func (s *dbStorage) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
@@ -238,6 +249,7 @@ func (s *dbStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
+// Close закрытие storage.
 func (s *dbStorage) Close() error {
 	return s.sqlDB.Close()
 }

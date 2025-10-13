@@ -12,6 +12,7 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 )
 
+// WithAuth аутентифицирует юзера.
 func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		var userID string
@@ -56,6 +57,7 @@ func (m *Middleware) WithAuth(next http.Handler) http.Handler {
 	})
 }
 
+// Claims штука для jwt.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID string

@@ -10,16 +10,19 @@ import (
 	"go.uber.org/zap"
 )
 
+// Middleware посредник.
 type Middleware struct {
 	log *zap.SugaredLogger
 }
 
+// MakeMiddleware конструктор посредника.
 func MakeMiddleware(log *zap.SugaredLogger) *Middleware {
 	return &Middleware{
 		log: log,
 	}
 }
 
+// WithLog с логированием запросов и ответов.
 func (m *Middleware) WithLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		start := time.Now()
@@ -50,6 +53,7 @@ func (m *Middleware) WithLog(next http.Handler) http.Handler {
 	})
 }
 
+// WithGzipResp с сжатием ответа.
 func (m *Middleware) WithGzipResp(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		oRes := res
@@ -70,6 +74,7 @@ func (m *Middleware) WithGzipResp(next http.Handler) http.Handler {
 	})
 }
 
+// WithGzipReq с разжатием респонса.
 func (m *Middleware) WithGzipReq(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if strings.Contains(req.Header.Get("Content-Encoding"), "gzip") {
@@ -87,6 +92,7 @@ func (m *Middleware) WithGzipReq(next http.Handler) http.Handler {
 	})
 }
 
+// WithJSONReqCheck с проверкой на json content-type request'a.
 func (m *Middleware) WithJSONReqCheck(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		if !strings.Contains(req.Header.Get("Content-Type"), "application/json") {

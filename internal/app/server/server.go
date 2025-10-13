@@ -12,6 +12,7 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 )
 
+// Run запуск http сервера приложения.
 func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error {
 	r := getRouter(h, m)
 	return http.ListenAndServe(cfg.ServerHostPort, r)

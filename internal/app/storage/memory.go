@@ -11,6 +11,7 @@ type memoryStorage struct {
 	userLinks map[string][]string
 }
 
+// MakeMemoryStorage конструктор стораджа в памяти.
 func MakeMemoryStorage() *memoryStorage {
 	return &memoryStorage{
 		m:         make(map[string]string),
@@ -18,10 +19,12 @@ func MakeMemoryStorage() *memoryStorage {
 	}
 }
 
+// Load загрузить сторадж. Инициализация.
 func (s *memoryStorage) Load(ctx context.Context) error {
 	return nil
 }
 
+// Set установить.
 func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
 	userID, err := getUserIDOrPanic(ctx)
 	if err != nil {
@@ -33,6 +36,7 @@ func (s *memoryStorage) Set(ctx context.Context, key, value string) error {
 	return nil
 }
 
+// SetBatch установить пачкой.
 func (s *memoryStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
 	for key, originalURL := range keyValues {
 		err := s.Set(ctx, key, originalURL)
@@ -43,6 +47,7 @@ func (s *memoryStorage) SetBatch(ctx context.Context, keyValues map[string]strin
 	return nil
 }
 
+// Get получить по ключу.
 func (s *memoryStorage) Get(ctx context.Context, key string) (string, error) {
 	v, ok := s.m[key]
 	if !ok {
@@ -52,6 +57,7 @@ func (s *memoryStorage) Get(ctx context.Context, key string) (string, error) {
 	return v, nil
 }
 
+// GetByUserID получить по юзеру.
 func (s *memoryStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	var urls []map[string]string
 
@@ -72,14 +78,17 @@ func (s *memoryStorage) GetByUserID(ctx context.Context) ([]map[string]string, e
 	return urls, nil
 }
 
+// DeleteBatch удалить пачкой.
 func (s *memoryStorage) DeleteBatch(ctx context.Context, keys []string, userID string) error {
 	return nil
 }
 
+// Ping статуса.
 func (s *memoryStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
+// Close закроем.
 func (s *memoryStorage) Close() error {
 	return nil
 }
