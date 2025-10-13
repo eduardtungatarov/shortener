@@ -14,6 +14,7 @@ import (
 // UserIDKey тип ключа в контексте для поиска userID авторизованного пользователя приложения.
 type UserIDKey string
 
+// Дефолтные настройки.
 const (
 	// DefaultServerHostPort дефолтный адрес запуска HTTP сервера.
 	DefaultServerHostPort = "localhost:8080"
@@ -23,10 +24,10 @@ const (
 	DefaultFileStoragePath = "/tmp/short-url-db.json"
 	// DefaultDatabaseDSN строка с адресом подключения к БД.
 	DefaultDatabaseDSN = ""
-
-	// UserIDKeyName имя ключа для поиска в контексте userID авторизованного пользователя сервиса.
-	UserIDKeyName UserIDKey = "userId"
 )
+
+// UserIDKeyName имя ключа для поиска в контексте userID авторизованного пользователя сервиса.
+const UserIDKeyName UserIDKey = "userId"
 
 // Config настройки сервиса.
 type Config struct {

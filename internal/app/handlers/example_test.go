@@ -21,7 +21,11 @@ func ExampleHandler_HandlePost() {
 
 	// Отправляем запрос.
 	client := http.Client{}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("err")
+		return
+	}
 
 	// Обрабатываем успешный ответ.
 	if resp.StatusCode == http.StatusCreated {
@@ -45,7 +49,11 @@ func ExampleHandler_HandleGet() {
 
 	// Отправляем запрос.
 	client := http.Client{}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("err")
+		return
+	}
 	defer resp.Body.Close()
 
 	// Обрабатываем успешный редирект.
@@ -71,7 +79,11 @@ func ExampleHandler_HandleShorten() {
 
 	// Отправляем запрос.
 	client := http.Client{}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("err")
+		return
+	}
 
 	// Обрабатываем успешный json ответ.
 	if resp.StatusCode == http.StatusCreated {
@@ -99,7 +111,11 @@ func ExampleHandler_HandleGetPing() {
 
 	// Отправляем запрос.
 	client := http.Client{}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("err")
+		return
+	}
 	defer resp.Body.Close()
 
 	// Сервис и его подсистемы доступны.
@@ -133,7 +149,11 @@ func ExampleHandler_HandleShortenBatch() {
 
 	// Отправляем запрос.
 	client := http.Client{}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("err")
+		return
+	}
 
 	// Обрабатываем успешный json ответ.
 	if resp.StatusCode == http.StatusCreated {
@@ -171,7 +191,11 @@ func ExampleHandler_HandleGetUserUrls() {
 
 	// Отправляем запрос.
 	client := http.Client{}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("err")
+		return
+	}
 
 	// Обрабатываем успешный json ответ.
 	if resp.StatusCode == http.StatusOK {
