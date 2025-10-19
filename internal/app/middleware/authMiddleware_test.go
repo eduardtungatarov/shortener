@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/eduardtungatarov/shortener/internal/app/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

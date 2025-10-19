@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/google/uuid"
 	"os"
+
+	"github.com/google/uuid"
 )
 
 type storageString struct {
@@ -23,6 +24,7 @@ type fileStorage struct {
 	decoder   *json.Decoder
 }
 
+// MakeFileStorage создать файловый сторадж.
 func MakeFileStorage(filename string) (*fileStorage, error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0666)
 	if err != nil {
@@ -38,6 +40,7 @@ func MakeFileStorage(filename string) (*fileStorage, error) {
 	}, nil
 }
 
+// Load загрузить из файла в память.
 func (s *fileStorage) Load(ctx context.Context) error {
 	v := storageString{}
 
@@ -57,6 +60,7 @@ func (s *fileStorage) Load(ctx context.Context) error {
 	return nil
 }
 
+// Set установить сокращ URL.
 func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 	userID, err := getUserIDOrPanic(ctx)
 	if err != nil {
@@ -79,6 +83,7 @@ func (s *fileStorage) Set(ctx context.Context, key, value string) error {
 	return nil
 }
 
+// SetBatch установить пачкой.
 func (s *fileStorage) SetBatch(ctx context.Context, keyValues map[string]string) error {
 	for key, originalURL := range keyValues {
 		err := s.Set(ctx, key, originalURL)
@@ -89,15 +94,17 @@ func (s *fileStorage) SetBatch(ctx context.Context, keyValues map[string]string)
 	return nil
 }
 
+// Get получить URL по ключу.
 func (s *fileStorage) Get(ctx context.Context, key string) (string, error) {
 	v, ok := s.m[key]
 	if !ok {
 		return "", errors.New("not found")
 	}
-	
+
 	return v, nil
 }
 
+// GetByUserID получить все URL по юзеру.
 func (s *fileStorage) GetByUserID(ctx context.Context) ([]map[string]string, error) {
 	var urls []map[string]string
 
@@ -118,14 +125,17 @@ func (s *fileStorage) GetByUserID(ctx context.Context) ([]map[string]string, err
 	return urls, nil
 }
 
+// DeleteBatch удалить урлы пачкой.
 func (s *fileStorage) DeleteBatch(ctx context.Context, keys []string, userID string) error {
 	return nil
 }
 
+// Ping проверить ок или нет с стораджем.
 func (s *fileStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
+// Close закрыть сторадж.
 func (s *fileStorage) Close() error {
 	return nil
 }

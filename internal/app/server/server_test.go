@@ -5,18 +5,20 @@ import (
 	"compress/gzip"
 	"context"
 	"errors"
-	"github.com/eduardtungatarov/shortener/internal/app/handlers"
-	"github.com/eduardtungatarov/shortener/internal/app/logger"
-	"github.com/eduardtungatarov/shortener/internal/app/middleware"
-	"github.com/eduardtungatarov/shortener/internal/app/mocks"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/eduardtungatarov/shortener/internal/app/handlers"
+	"github.com/eduardtungatarov/shortener/internal/app/logger"
+	"github.com/eduardtungatarov/shortener/internal/app/middleware"
+	"github.com/eduardtungatarov/shortener/internal/app/mocks"
 )
 
 type mockStorage struct {

@@ -1,13 +1,18 @@
+// Package server роутинг и ф-я запуска http сервера приложения.
 package server
 
 import (
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
-	"github.com/go-chi/chi/v5"
-	"net/http"
 )
 
+// Run запуск http сервера приложения.
 func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error {
 	r := getRouter(h, m)
 	return http.ListenAndServe(cfg.ServerHostPort, r)
@@ -16,6 +21,8 @@ func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error
 func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 	r := chi.NewRouter()
 	r.Use(m.WithLog, m.WithAuth)
+
+	r.Mount("/debug", chiMiddleware.Profiler())
 
 	r.Get(
 		"/{shortUrl}",
