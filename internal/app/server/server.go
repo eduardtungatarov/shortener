@@ -3,6 +3,7 @@ package server
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
@@ -10,11 +11,32 @@ import (
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
+
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // Run запуск http сервера приложения.
 func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error {
 	r := getRouter(h, m)
+
+	if cfg.EnableHTTPS {
+		path := strings.Split(cfg.ServerHostPort, ":")
+		host := path[0]
+
+		manager := &autocert.Manager{
+			Cache:      autocert.DirCache("cache-dir"),
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(host),
+		}
+
+		server := &http.Server{
+			Addr:      host + ":443",
+			Handler:   r,
+			TLSConfig: manager.TLSConfig(),
+		}
+		return server.ListenAndServeTLS("", "")
+	}
+
 	return http.ListenAndServe(cfg.ServerHostPort, r)
 }
 
