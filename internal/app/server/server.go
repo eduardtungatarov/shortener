@@ -2,21 +2,23 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
-
-	"golang.org/x/crypto/acme/autocert"
 )
 
 // Run запуск http сервера приложения.
-func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error {
+func Run(ctx context.Context, cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error {
+	var server *http.Server
+	serverErr := make(chan error, 1)
 	r := getRouter(h, m)
 
 	if cfg.EnableHTTPS {
@@ -34,10 +36,24 @@ func Run(cfg config.Config, h *handlers.Handler, m *middleware.Middleware) error
 			Handler:   r,
 			TLSConfig: manager.TLSConfig(),
 		}
-		return server.ListenAndServeTLS("", "")
+		go func() {
+			serverErr <- server.ListenAndServeTLS("", "")
+		}()
 	}
 
-	return http.ListenAndServe(cfg.ServerHostPort, r)
+	if !cfg.EnableHTTPS {
+		server := &http.Server{Addr: cfg.ServerHostPort, Handler: r}
+		go func() {
+			serverErr <- server.ListenAndServe()
+		}()
+	}
+
+	select {
+	case err := <-serverErr:
+		return err
+	case <-ctx.Done():
+		return server.Shutdown(context.Background())
+	}
 }
 
 func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
