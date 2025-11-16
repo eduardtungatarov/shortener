@@ -49,7 +49,7 @@ func main() {
 	}
 
 	m := middleware.MakeMiddleware(log)
-	h := handlers.MakeHandler(s, cfg.BaseURL, log)
+	h := handlers.MakeHandler(s, cfg.BaseURL, log, cfg.TrustedSubnet)
 
 	var wg sync.WaitGroup
 	// Запускаем обработчик запросов на удаление ссылок.

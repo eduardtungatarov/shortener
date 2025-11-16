@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -51,19 +52,21 @@ type Storage interface {
 
 // Handler хендлер.
 type Handler struct {
-	storage  Storage
-	baseURL  string
-	log      *zap.SugaredLogger
-	deleteCh chan DeleteRequest
+	storage       Storage
+	baseURL       string
+	log           *zap.SugaredLogger
+	deleteCh      chan DeleteRequest
+	trustedSubnet string
 }
 
 // MakeHandler конструктор хендлеров.
-func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
+func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger, trustedSubnet string) *Handler {
 	return &Handler{
-		storage:  storage,
-		baseURL:  baseURL,
-		log:      log,
-		deleteCh: make(chan DeleteRequest, 1024),
+		storage:       storage,
+		baseURL:       baseURL,
+		log:           log,
+		deleteCh:      make(chan DeleteRequest, 1024),
+		trustedSubnet: trustedSubnet,
 	}
 }
 
@@ -298,6 +301,29 @@ func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Reques
 
 // HandleStats возвращает статистику.
 func (h *Handler) HandleStats(res http.ResponseWriter, req *http.Request) {
+	clientIP := req.Header.Get("X-Real-IP")
+	if clientIP == "" {
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	ip := net.ParseIP(clientIP)
+	if ip == nil {
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	_, subnet, err := net.ParseCIDR(h.trustedSubnet)
+	if err != nil {
+		log.Printf("ParseCIDR err: %v", err)
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	if !subnet.Contains(ip) {
+		res.WriteHeader(http.StatusForbidden)
+	}
+
 	stats, err := h.storage.GetStats(req.Context())
 	if err != nil {
 		log.Printf("get stats err: %v", err)

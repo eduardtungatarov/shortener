@@ -484,7 +484,6 @@ func TestServer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// заводим сервер
 			log, err := logger.MakeNop()
 			if err != nil {
@@ -496,6 +495,7 @@ func TestServer(t *testing.T) {
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
 				log,
+				"",
 			)
 
 			r := getRouter(h, m)
@@ -521,7 +521,7 @@ func TestServer(t *testing.T) {
 			req.Header.Set("Accept-Encoding", tt.input.acceptEncoding)
 			req.Header.Set("Content-Encoding", tt.input.contentEncoding)
 
-			//шлем запрос на сервер
+			// шлем запрос на сервер
 			client := ts.Client()
 			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse
