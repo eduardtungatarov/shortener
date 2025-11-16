@@ -16,6 +16,7 @@ type Storage interface {
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
 	Close() error
+	GetStats(ctx context.Context) (map[string]int, error)
 }
 
 // MakeStorage создать конкретный storage в зависимости от настроек.

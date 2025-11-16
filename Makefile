@@ -36,3 +36,6 @@ gotest:
 
 goimports:
 	goimports -local github.com/eduardtungatarov/shortener -w .
+
+linter:
+	go run cmd/linter/linter.go ./...

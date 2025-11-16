@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -46,23 +47,26 @@ type Storage interface {
 	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
+	GetStats(ctx context.Context) (map[string]int, error)
 }
 
 // Handler хендлер.
 type Handler struct {
-	storage  Storage
-	baseURL  string
-	log      *zap.SugaredLogger
-	deleteCh chan DeleteRequest
+	storage       Storage
+	baseURL       string
+	log           *zap.SugaredLogger
+	deleteCh      chan DeleteRequest
+	trustedSubnet string
 }
 
 // MakeHandler конструктор хендлеров.
-func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
+func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger, trustedSubnet string) *Handler {
 	return &Handler{
-		storage:  storage,
-		baseURL:  baseURL,
-		log:      log,
-		deleteCh: make(chan DeleteRequest, 1024),
+		storage:       storage,
+		baseURL:       baseURL,
+		log:           log,
+		deleteCh:      make(chan DeleteRequest, 1024),
+		trustedSubnet: trustedSubnet,
 	}
 }
 
@@ -293,6 +297,54 @@ func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Reques
 	}
 
 	res.WriteHeader(http.StatusAccepted)
+}
+
+// HandleStats возвращает статистику.
+func (h *Handler) HandleStats(res http.ResponseWriter, req *http.Request) {
+	clientIP := req.Header.Get("X-Real-IP")
+	if clientIP == "" {
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	ip := net.ParseIP(clientIP)
+	if ip == nil {
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	_, subnet, err := net.ParseCIDR(h.trustedSubnet)
+	if err != nil {
+		log.Printf("ParseCIDR err: %v", err)
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	if !subnet.Contains(ip) {
+		res.WriteHeader(http.StatusForbidden)
+	}
+
+	stats, err := h.storage.GetStats(req.Context())
+	if err != nil {
+		log.Printf("get stats err: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := json.Marshal(stats)
+	if err != nil {
+		log.Printf("marshal err: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	_, err = res.Write(resp)
+	if err != nil {
+		log.Printf("response write: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *Handler) getKeyBatch(batch []ShortURL) map[string]string {
