@@ -29,6 +29,8 @@ const (
 	DefaultEnableHTTPS = false
 	// DefaultConfigPath дефолтный путь к файлу конфигурации.
 	DefaultConfigPath = ""
+	// DefaultTrustedSubnet дефолтная маска подсети.
+	DefaultTrustedSubnet = ""
 )
 
 // UserIDKeyName имя ключа для поиска в контексте userID авторизованного пользователя сервиса.
@@ -41,6 +43,7 @@ type Config struct {
 	BaseURL         string // базовый адрес результирующего сокращённого URL
 	FileStoragePath string // путь до файла, куда сохраняются все сокращенные URL
 	Database               // настройки бд
+	TrustedSubnet   string // маска подсети
 }
 
 // Database настройки БД хранения сокращенных ссылок.
@@ -56,6 +59,7 @@ type JSONConfig struct {
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
 	EnableHTTPS     bool   `json:"enable_https"`
+	TrustedSubnet   string `json:"trusted_subnet"`
 }
 
 // LoadFromFlag инициализация конфига приложения.
@@ -67,6 +71,7 @@ func LoadFromFlag() Config {
 	databaseDSN := flag.String("d", DefaultDatabaseDSN, "строка с адресом подключения к БД")
 	enableHTTPS := flag.Bool("s", DefaultEnableHTTPS, "запуск сервера по защищенному протоколу HTTPS")
 	configPath := flag.String("c", DefaultConfigPath, "путь к файлу конфигурации в формате JSON")
+	trustedSubnet := flag.String("t", DefaultTrustedSubnet, "маска подсети")
 	flag.Parse()
 
 	jsonConfig := loadJSONConfig(*configPath)
@@ -101,6 +106,12 @@ func LoadFromFlag() Config {
 		*enableHTTPS = true
 	}
 
+	if envVal, ok := os.LookupEnv("TRUSTED_SUBNET"); ok {
+		*trustedSubnet = envVal
+	} else if jsonConfig.TrustedSubnet != "" {
+		*trustedSubnet = jsonConfig.TrustedSubnet
+	}
+
 	return Config{
 		ServerHostPort:  *flagServer,
 		EnableHTTPS:     *enableHTTPS,
@@ -110,6 +121,7 @@ func LoadFromFlag() Config {
 			DSN:     *databaseDSN,
 			Timeout: time.Second * 1,
 		},
+		TrustedSubnet: *trustedSubnet,
 	}
 }
 

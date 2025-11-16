@@ -295,7 +295,7 @@ func (s *dbStorage) GetStats(ctx context.Context) (map[string]int, error) {
 	}
 
 	return map[string]int{
-		"urls": urlsCount,
+		"urls":  urlsCount,
 		"users": usersCount,
 	}, nil
 }

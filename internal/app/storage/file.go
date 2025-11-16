@@ -142,7 +142,7 @@ func (s *fileStorage) Close() error {
 
 func (s *fileStorage) GetStats(ctx context.Context) (map[string]int, error) {
 	return map[string]int{
-		"urls": len(s.m),
+		"urls":  len(s.m),
 		"users": len(s.userLinks),
 	}, nil
 }

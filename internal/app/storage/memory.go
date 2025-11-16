@@ -95,7 +95,7 @@ func (s *memoryStorage) Close() error {
 
 func (s *memoryStorage) GetStats(ctx context.Context) (map[string]int, error) {
 	return map[string]int{
-		"urls": len(s.m),
+		"urls":  len(s.m),
 		"users": len(s.userLinks),
 	}, nil
 }
