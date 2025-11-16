@@ -68,6 +68,10 @@ func (s *mockStorage) Ping(ctx context.Context) error {
 	return nil
 }
 
+func (s *mockStorage) GetStats(ctx context.Context) (map[string]int, error) {
+	return nil, nil
+}
+
 func TestServer(t *testing.T) {
 	type input struct {
 		preloadedStorage handlers.Storage

@@ -253,3 +253,49 @@ func (s *dbStorage) Ping(ctx context.Context) error {
 func (s *dbStorage) Close() error {
 	return s.sqlDB.Close()
 }
+
+func (s *dbStorage) GetStats(ctx context.Context) (map[string]int, error) {
+	ctx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+
+	rows, err := s.sqlDB.QueryContext(ctx, `SELECT count(*) FROM urls`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var urlsCount int
+	if rows.Next() {
+		err = rows.Scan(&urlsCount)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err = s.sqlDB.QueryContext(ctx, `SELECT count(*) FROM users`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var usersCount int
+	if rows.Next() {
+		err = rows.Scan(&usersCount)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return map[string]int{
+		"urls": urlsCount,
+		"users": usersCount,
+	}, nil
+}

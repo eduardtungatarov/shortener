@@ -92,3 +92,10 @@ func (s *memoryStorage) Ping(ctx context.Context) error {
 func (s *memoryStorage) Close() error {
 	return nil
 }
+
+func (s *memoryStorage) GetStats(ctx context.Context) (map[string]int, error) {
+	return map[string]int{
+		"urls": len(s.m),
+		"users": len(s.userLinks),
+	}, nil
+}

@@ -77,6 +77,11 @@ func getRouter(h *handlers.Handler, m *middleware.Middleware) chi.Router {
 		h.HandleGetUserUrls,
 	)
 
+	r.Get(
+		"/api/internal/stats",
+		h.HandleStats,
+	)
+
 	gzipReqG := r.Group(func(r chi.Router) {
 		r.Use(m.WithGzipReq)
 	})

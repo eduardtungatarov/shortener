@@ -46,6 +46,7 @@ type Storage interface {
 	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
+	GetStats(ctx context.Context) (map[string]int, error)
 }
 
 // Handler хендлер.
@@ -293,6 +294,31 @@ func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Reques
 	}
 
 	res.WriteHeader(http.StatusAccepted)
+}
+
+// HandleStats возвращает статистику.
+func (h *Handler) HandleStats(res http.ResponseWriter, req *http.Request) {
+	stats, err := h.storage.GetStats(req.Context())
+	if err != nil {
+		log.Printf("get stats err: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := json.Marshal(stats)
+	if err != nil {
+		log.Printf("marshal err: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	_, err = res.Write(resp)
+	if err != nil {
+		log.Printf("response write: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *Handler) getKeyBatch(batch []ShortURL) map[string]string {
