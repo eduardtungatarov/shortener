@@ -50,23 +50,35 @@ type Storage interface {
 	GetStats(ctx context.Context) (map[string]int, error)
 }
 
+type ShortenerService interface {
+	GetShortenURL(ctx context.Context, URL string) (string, error)
+}
+
 // Handler хендлер.
 type Handler struct {
-	storage       Storage
-	baseURL       string
-	log           *zap.SugaredLogger
-	deleteCh      chan DeleteRequest
-	trustedSubnet string
+	storage          Storage
+	baseURL          string
+	log              *zap.SugaredLogger
+	deleteCh         chan DeleteRequest
+	trustedSubnet    string
+	shortenerService ShortenerService
 }
 
 // MakeHandler конструктор хендлеров.
-func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger, trustedSubnet string) *Handler {
+func MakeHandler(
+	storage Storage,
+	baseURL string,
+	log *zap.SugaredLogger,
+	trustedSubnet string,
+	shortenerService ShortenerService,
+) *Handler {
 	return &Handler{
-		storage:       storage,
-		baseURL:       baseURL,
-		log:           log,
-		deleteCh:      make(chan DeleteRequest, 1024),
-		trustedSubnet: trustedSubnet,
+		storage:          storage,
+		baseURL:          baseURL,
+		log:              log,
+		deleteCh:         make(chan DeleteRequest, 1024),
+		trustedSubnet:    trustedSubnet,
+		shortenerService: shortenerService,
 	}
 }
 
@@ -86,8 +98,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	key := h.getKey(body)
-	err = h.storage.Set(req.Context(), key, string(body))
+	shortURL, err := h.shortenerService.GetShortenURL(req.Context(), string(body))
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -101,7 +112,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusCreated)
 	}
 
-	_, err = res.Write([]byte(h.baseURL + "/" + key))
+	_, err = res.Write([]byte(shortURL))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Ошибка при записи ответа: %v", err)
@@ -149,8 +160,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// Сохраняем url.
-	key := h.getKey([]byte(reqStr.URL))
-	err := h.storage.Set(req.Context(), key, reqStr.URL)
+	shortURL, err := h.shortenerService.GetShortenURL(req.Context(), reqStr.URL)
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -161,7 +171,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	respStr := struct {
 		Result string `json:"result"`
 	}{}
-	respStr.Result = h.baseURL + "/" + key
+	respStr.Result = shortURL
 
 	res.Header().Set("Content-Type", "application/json")
 

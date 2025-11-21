@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	shortenerService "github.com/eduardtungatarov/shortener/internal/app/service/shortener"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -491,11 +493,13 @@ func TestServer(t *testing.T) {
 			}
 
 			m := middleware.MakeMiddleware(log)
+			srv := shortenerService.New(tt.input.preloadedStorage, "http://localhost:8080")
 			h := handlers.MakeHandler(
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
 				log,
 				"",
+				srv,
 			)
 
 			r := getRouter(h, m)

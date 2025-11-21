@@ -3,16 +3,23 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"os/signal"
-	"sync"
 	"syscall"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/eduardtungatarov/shortener/internal/app/config"
 	"github.com/eduardtungatarov/shortener/internal/app/handlers"
 	"github.com/eduardtungatarov/shortener/internal/app/logger"
 	"github.com/eduardtungatarov/shortener/internal/app/middleware"
 	"github.com/eduardtungatarov/shortener/internal/app/server"
+	shortenerService "github.com/eduardtungatarov/shortener/internal/app/service/shortener"
 	"github.com/eduardtungatarov/shortener/internal/app/storage"
+
+	v1 "github.com/eduardtungatarov/shortener/internal/contracts/shortener/v1"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -49,24 +56,46 @@ func main() {
 	}
 
 	m := middleware.MakeMiddleware(log)
-	h := handlers.MakeHandler(s, cfg.BaseURL, log, cfg.TrustedSubnet)
+	srv := shortenerService.New(s, cfg.BaseURL)
+	h := handlers.MakeHandler(s, cfg.BaseURL, log, cfg.TrustedSubnet, srv)
 
-	var wg sync.WaitGroup
+	grp, ctx := errgroup.WithContext(ctx)
+
 	// Запускаем обработчик запросов на удаление ссылок.
-	go func() {
-		defer wg.Done()
-		h.DeleteBatch(ctx)
-	}()
+	grp.Go(func() error {
+		return h.DeleteBatch(ctx)
+	})
 
-	// Запускаем сервер.
-	go func() {
-		defer wg.Done()
-		err = server.Run(ctx, cfg, h, m)
+	// Запускаем http сервер.
+	grp.Go(func() error {
+		return server.Run(ctx, cfg, h, m)
+	})
+
+	// Запускаем grpc сервер.
+	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(middleware.AuthInterceptor))
+	grpcHandler := handlers.NewGrpcHandler(srv)
+	v1.RegisterShortenerServiceServer(grpcServer, grpcHandler)
+	reflection.Register(grpcServer)
+	grp.Go(func() error {
+		lis, err := net.Listen("tcp", ":50051")
 		if err != nil {
-			log.Fatalf("failed to run server: %v", err)
+			return err
 		}
-	}()
+		serverErr := make(chan error, 1)
+		go func() {
+			serverErr <- grpcServer.Serve(lis)
+		}()
+		select {
+		case err := <-serverErr:
+			return err
+		case <-ctx.Done():
+			grpcServer.GracefulStop()
+			return nil
+		}
+	})
 
-	<-ctx.Done()
-	wg.Wait()
+	if err := grp.Wait(); err != nil {
+		log.Info("error stopping the service: %v", err)
+	}
+	log.Info("service has been stopped")
 }

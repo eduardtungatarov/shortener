@@ -31,7 +31,7 @@ func Run(ctx context.Context, cfg config.Config, h *handlers.Handler, m *middlew
 			HostPolicy: autocert.HostWhitelist(host),
 		}
 
-		server := &http.Server{
+		server = &http.Server{
 			Addr:      host + ":443",
 			Handler:   r,
 			TLSConfig: manager.TLSConfig(),
@@ -39,10 +39,8 @@ func Run(ctx context.Context, cfg config.Config, h *handlers.Handler, m *middlew
 		go func() {
 			serverErr <- server.ListenAndServeTLS("", "")
 		}()
-	}
-
-	if !cfg.EnableHTTPS {
-		server := &http.Server{Addr: cfg.ServerHostPort, Handler: r}
+	} else {
+		server = &http.Server{Addr: cfg.ServerHostPort, Handler: r}
 		go func() {
 			serverErr <- server.ListenAndServe()
 		}()

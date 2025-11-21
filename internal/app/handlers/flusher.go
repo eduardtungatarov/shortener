@@ -5,7 +5,7 @@ import (
 )
 
 // DeleteBatch обработчик запросов на удаление ссылок.
-func (h *Handler) DeleteBatch(ctx context.Context) {
+func (h *Handler) DeleteBatch(ctx context.Context) error {
 	for {
 		select {
 		case r := <-h.deleteCh:
@@ -14,7 +14,7 @@ func (h *Handler) DeleteBatch(ctx context.Context) {
 				h.log.Info("Не удалось удалить пачку", err)
 			}
 		case <-ctx.Done():
-			return
+			return nil
 		}
 	}
 }
