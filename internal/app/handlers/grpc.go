@@ -3,8 +3,6 @@ package handlers
 import (
 	"context"
 
-	"google.golang.org/protobuf/types/known/emptypb"
-
 	v1 "github.com/eduardtungatarov/shortener/internal/contracts/shortener/v1"
 )
 
@@ -37,8 +35,4 @@ func (h *grpcHandler) ExpandURL(ctx context.Context, req *v1.URLExpandRequest) (
 	return &v1.URLExpandResponse{
 		Result: URL,
 	}, nil
-}
-
-func (h *grpcHandler) ListUserURLs(ctx context.Context, req *emptypb.Empty) (*v1.UserURLsResponse, error) {
-	return &v1.UserURLsResponse{}, nil
 }

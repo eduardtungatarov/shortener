@@ -57,7 +57,7 @@ func (s *Service) GetFullURL(ctx context.Context, shortID string) (string, error
 	return URL, nil
 }
 
-func (h *Service) getKey(url []byte) string {
+func (s *Service) getKey(url []byte) string {
 	hash := md5.Sum(url)
 	hashStr := fmt.Sprintf("%x", hash)
 	key := hashStr[:7]
