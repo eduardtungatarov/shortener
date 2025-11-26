@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -46,23 +47,39 @@ type Storage interface {
 	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
+	GetStats(ctx context.Context) (map[string]int, error)
+}
+
+type ShortenerService interface {
+	GetShortenURL(ctx context.Context, URL string) (string, error)
+	GetFullURL(ctx context.Context, shortID string) (string, error)
 }
 
 // Handler хендлер.
 type Handler struct {
-	storage  Storage
-	baseURL  string
-	log      *zap.SugaredLogger
-	deleteCh chan DeleteRequest
+	storage          Storage
+	baseURL          string
+	log              *zap.SugaredLogger
+	deleteCh         chan DeleteRequest
+	trustedSubnet    string
+	shortenerService ShortenerService
 }
 
 // MakeHandler конструктор хендлеров.
-func MakeHandler(storage Storage, baseURL string, log *zap.SugaredLogger) *Handler {
+func MakeHandler(
+	storage Storage,
+	baseURL string,
+	log *zap.SugaredLogger,
+	trustedSubnet string,
+	shortenerService ShortenerService,
+) *Handler {
 	return &Handler{
-		storage:  storage,
-		baseURL:  baseURL,
-		log:      log,
-		deleteCh: make(chan DeleteRequest, 1024),
+		storage:          storage,
+		baseURL:          baseURL,
+		log:              log,
+		deleteCh:         make(chan DeleteRequest, 1024),
+		trustedSubnet:    trustedSubnet,
+		shortenerService: shortenerService,
 	}
 }
 
@@ -82,8 +99,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	key := h.getKey(body)
-	err = h.storage.Set(req.Context(), key, string(body))
+	shortURL, err := h.shortenerService.GetShortenURL(req.Context(), string(body))
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -97,7 +113,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusCreated)
 	}
 
-	_, err = res.Write([]byte(h.baseURL + "/" + key))
+	_, err = res.Write([]byte(shortURL))
 	if err != nil {
 		res.WriteHeader(http.StatusInternalServerError)
 		log.Printf("Ошибка при записи ответа: %v", err)
@@ -109,7 +125,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "shortUrl")
 
-	url, err := h.storage.Get(req.Context(), shortURL)
+	url, err := h.shortenerService.GetFullURL(req.Context(), shortURL)
 	if err != nil {
 		if errors.Is(err, storage.ErrDeleted) {
 			res.WriteHeader(http.StatusGone)
@@ -145,8 +161,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// Сохраняем url.
-	key := h.getKey([]byte(reqStr.URL))
-	err := h.storage.Set(req.Context(), key, reqStr.URL)
+	shortURL, err := h.shortenerService.GetShortenURL(req.Context(), reqStr.URL)
 	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil && !isConflict {
 		res.WriteHeader(http.StatusInternalServerError)
@@ -157,7 +172,7 @@ func (h *Handler) HandleShorten(res http.ResponseWriter, req *http.Request) {
 	respStr := struct {
 		Result string `json:"result"`
 	}{}
-	respStr.Result = h.baseURL + "/" + key
+	respStr.Result = shortURL
 
 	res.Header().Set("Content-Type", "application/json")
 
@@ -293,6 +308,54 @@ func (h *Handler) HandleDeleteUserUrls(res http.ResponseWriter, req *http.Reques
 	}
 
 	res.WriteHeader(http.StatusAccepted)
+}
+
+// HandleStats возвращает статистику.
+func (h *Handler) HandleStats(res http.ResponseWriter, req *http.Request) {
+	clientIP := req.Header.Get("X-Real-IP")
+	if clientIP == "" {
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	ip := net.ParseIP(clientIP)
+	if ip == nil {
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	_, subnet, err := net.ParseCIDR(h.trustedSubnet)
+	if err != nil {
+		log.Printf("ParseCIDR err: %v", err)
+		res.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	if !subnet.Contains(ip) {
+		res.WriteHeader(http.StatusForbidden)
+	}
+
+	stats, err := h.storage.GetStats(req.Context())
+	if err != nil {
+		log.Printf("get stats err: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp, err := json.Marshal(stats)
+	if err != nil {
+		log.Printf("marshal err: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	_, err = res.Write(resp)
+	if err != nil {
+		log.Printf("response write: %v", err)
+		res.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func (h *Handler) getKeyBatch(batch []ShortURL) map[string]string {

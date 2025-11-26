@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	shortenerService "github.com/eduardtungatarov/shortener/internal/app/service/shortener"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -66,6 +68,10 @@ func (s *mockStorage) DeleteBatch(ctx context.Context, keys []string, userID str
 
 func (s *mockStorage) Ping(ctx context.Context) error {
 	return nil
+}
+
+func (s *mockStorage) GetStats(ctx context.Context) (map[string]int, error) {
+	return nil, nil
 }
 
 func TestServer(t *testing.T) {
@@ -480,7 +486,6 @@ func TestServer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			// заводим сервер
 			log, err := logger.MakeNop()
 			if err != nil {
@@ -488,10 +493,13 @@ func TestServer(t *testing.T) {
 			}
 
 			m := middleware.MakeMiddleware(log)
+			srv := shortenerService.New(tt.input.preloadedStorage, "http://localhost:8080")
 			h := handlers.MakeHandler(
 				tt.input.preloadedStorage,
 				"http://localhost:8080",
 				log,
+				"",
+				srv,
 			)
 
 			r := getRouter(h, m)
@@ -517,7 +525,7 @@ func TestServer(t *testing.T) {
 			req.Header.Set("Accept-Encoding", tt.input.acceptEncoding)
 			req.Header.Set("Content-Encoding", tt.input.contentEncoding)
 
-			//шлем запрос на сервер
+			// шлем запрос на сервер
 			client := ts.Client()
 			client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 				return http.ErrUseLastResponse

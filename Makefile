@@ -36,3 +36,13 @@ gotest:
 
 goimports:
 	goimports -local github.com/eduardtungatarov/shortener -w .
+
+linter:
+	go run cmd/linter/linter.go ./...
+
+contract-generate:
+	protoc \
+      -I=contracts/public/shortener/v1/ \
+      --go_out=./ \
+      --go-grpc_out=./ \
+      contracts/public/shortener/v1/proto.proto
