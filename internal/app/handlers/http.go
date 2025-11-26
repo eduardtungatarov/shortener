@@ -41,10 +41,8 @@ type DeleteRequest struct {
 
 // Storage интерфейс хранилища ссылок.
 type Storage interface {
-	Set(ctx context.Context, key, value string) error
 	SetBatch(ctx context.Context, keyValues map[string]string) error
 	DeleteBatch(ctx context.Context, keys []string, userID string) error
-	Get(ctx context.Context, key string) (string, error)
 	Ping(ctx context.Context) error
 	GetByUserID(ctx context.Context) ([]map[string]string, error)
 	GetStats(ctx context.Context) (map[string]int, error)
@@ -52,6 +50,7 @@ type Storage interface {
 
 type ShortenerService interface {
 	GetShortenURL(ctx context.Context, URL string) (string, error)
+	GetFullURL(ctx context.Context, shortID string) (string, error)
 }
 
 // Handler хендлер.
@@ -124,7 +123,7 @@ func (h *Handler) HandlePost(res http.ResponseWriter, req *http.Request) {
 func (h *Handler) HandleGet(res http.ResponseWriter, req *http.Request) {
 	shortURL := chi.URLParam(req, "shortUrl")
 
-	url, err := h.storage.Get(req.Context(), shortURL)
+	url, err := h.shortenerService.GetFullURL(req.Context(), shortURL)
 	if err != nil {
 		if errors.Is(err, storage.ErrDeleted) {
 			res.WriteHeader(http.StatusGone)

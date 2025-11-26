@@ -13,6 +13,7 @@ import (
 // Storage интерфейс хранилища ссылок.
 type Storage interface {
 	Set(ctx context.Context, key, value string) error
+	Get(ctx context.Context, key string) (string, error)
 }
 
 type Service struct {
@@ -46,6 +47,14 @@ func (s *Service) GetShortenURL(ctx context.Context, URL string) (string, error)
 		return "", err
 	}
 	return shortURL, nil
+}
+
+func (s *Service) GetFullURL(ctx context.Context, shortID string) (string, error) {
+	URL, err := s.storage.Get(ctx, shortID)
+	if err != nil {
+		return "", err
+	}
+	return URL, nil
 }
 
 func (h *Service) getKey(url []byte) string {

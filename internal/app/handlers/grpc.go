@@ -2,12 +2,6 @@ package handlers
 
 import (
 	"context"
-	"errors"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
-	"github.com/eduardtungatarov/shortener/internal/app/storage"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -27,11 +21,7 @@ func NewGrpcHandler(shortenerService ShortenerService) *grpcHandler {
 
 func (h *grpcHandler) ShortenURL(ctx context.Context, req *v1.URLShortenRequest) (*v1.URLShortenResponse, error) {
 	shortURL, err := h.shortenerService.GetShortenURL(ctx, req.Url)
-	isConflict := errors.Is(err, storage.ErrConflict)
 	if err != nil {
-		if isConflict {
-			return nil, status.Error(codes.AlreadyExists, "ссылка уже есть такая в бд")
-		}
 		return nil, err
 	}
 	return &v1.URLShortenResponse{
@@ -40,7 +30,13 @@ func (h *grpcHandler) ShortenURL(ctx context.Context, req *v1.URLShortenRequest)
 }
 
 func (h *grpcHandler) ExpandURL(ctx context.Context, req *v1.URLExpandRequest) (*v1.URLExpandResponse, error) {
-	return &v1.URLExpandResponse{}, nil
+	URL, err := h.shortenerService.GetFullURL(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.URLExpandResponse{
+		Result: URL,
+	}, nil
 }
 
 func (h *grpcHandler) ListUserURLs(ctx context.Context, req *emptypb.Empty) (*v1.UserURLsResponse, error) {
